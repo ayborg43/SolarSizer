@@ -1,0 +1,33 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Outfit', sans-serif; }
+button { font-family: inherit; }
+input { font-family: inherit; }
+
+@media print {
+  @page {
+    margin: 14mm;
+  }
+
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  header,
+  button {
+    display: none !important;
+  }
+
+  input[type="checkbox"] {
+    display: inline-block !important;
+  }
+
+  div {
+    break-inside: avoid;
+  }
+}
