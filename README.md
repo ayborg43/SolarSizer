@@ -18,10 +18,12 @@ SolarSizer is a React/Vite solar setup estimator for home and small-business loa
 - Running peak load is the sum of selected appliance watts.
 - Surge load applies appliance-specific multipliers for high-startup devices.
 - Inverter recommendation uses surge estimate plus 25% headroom.
+- Inverter efficiency of 90% (`INVERTER_EFFICIENCY`) is applied to battery and panel sizing.
 - Battery capacity adjusts for selected battery depth of discharge.
-- Battery layout assumes common 12V physical batteries and derives series and parallel strings from selected system voltage.
+- Battery layout assumes common 12V physical batteries and derives series and parallel strings from selected system voltage. Lithium banks are commonly sold as single 24V/48V units in practice; the module count is an equivalent-capacity guide.
 - Panel sizing uses local peak sun hours, selected battery efficiency, and a 25% safety factor.
 - Roof space uses an approximate 2.2 square meters per panel.
+- Peak sun hour values are approximate long-term averages (NASA POWER / Global Solar Atlas).
 
 ## Limitations
 
@@ -48,7 +50,10 @@ npm.cmd run build
 
 ## Project Structure
 
-- `src/SolarCalculator.jsx` - Main React UI.
+- `src/SolarCalculator.jsx` - Main React UI (wizard).
 - `src/solarCalculations.js` - Pure calculation and export-summary helpers.
-- `test/solarCalculations.test.js` - Unit tests for sizing, voltage recommendation, and export summary.
+- `src/solarCalculations.test.js` - Unit tests for sizing, voltage recommendation, and export summary (`node --test`).
+- `src/data.js` - Appliance catalogue, country/state PSH data, battery types, load profiles.
+- `src/theme.js` - Light/dark theme tokens.
+- `src/ErrorBoundary.jsx` - Top-level error fallback.
 - `src/index.css` - Global and print styles.

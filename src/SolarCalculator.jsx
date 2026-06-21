@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   appliancePeakWatts,
   applianceWh,
@@ -7,224 +7,20 @@ import {
   calcResults,
   clampNumber,
   getRecommendedVoltage,
+  INVERTER_EFFICIENCY,
 } from "./solarCalculations";
-
-// ─── Appliances ────────────────────────────────────────────────────────────
-const APPLIANCES = [
-  { id: "bulb_led",        name: "LED Bulb",         icon: "💡",  watts: 10   },
-  { id: "fan_ceiling",     name: "Ceiling Fan",       icon: "🌀",  watts: 75   },
-  { id: "fan_standing",    name: "Standing Fan",      icon: "🌬️",  watts: 55   },
-  { id: "tv_32",           name: 'TV (32")',           icon: "📺",  watts: 60   },
-  { id: "tv_43",           name: 'TV (43")',           icon: "📺",  watts: 90   },
-  { id: "fridge",          name: "Refrigerator",      icon: "🧊",  watts: 150  },
-  { id: "freezer",         name: "Deep Freezer",      icon: "❄️",  watts: 200  },
-  { id: "laptop",          name: "Laptop",            icon: "💻",  watts: 65   },
-  { id: "phone_charge",    name: "Phone Charger",     icon: "📱",  watts: 15   },
-  { id: "decoder",         name: "Decoder / DSTV",    icon: "📡",  watts: 25   },
-  { id: "router",          name: "WiFi Router",       icon: "📶",  watts: 10   },
-  { id: "ac_1hp",          name: "AC (1HP)",          icon: "🌡️",  watts: 900  },
-  { id: "ac_1_5hp",        name: "AC (1.5HP)",        icon: "🌡️",  watts: 1300 },
-  { id: "washing_machine", name: "Washing Machine",   icon: "🫧",  watts: 500  },
-  { id: "iron",            name: "Electric Iron",     icon: "🔧",  watts: 1000 },
-  { id: "water_pump",      name: "Water Pump",        icon: "💧",  watts: 750  },
-  { id: "microwave",       name: "Microwave",         icon: "🍲",  watts: 1000 },
-  { id: "blender",         name: "Blender",           icon: "🥤",  watts: 400  },
-];
-
-// ─── Countries ─────────────────────────────────────────────────────────────
-const COUNTRIES = [
-  {
-    code: "NG", name: "Nigeria", flag: "🇳🇬", defaultState: "Lagos",
-    states: [
-      { name: "Abia",        psh: 4.5, zone: "South East"   },
-      { name: "Adamawa",     psh: 5.5, zone: "North East"   },
-      { name: "Akwa Ibom",   psh: 4.3, zone: "South South"  },
-      { name: "Anambra",     psh: 4.6, zone: "South East"   },
-      { name: "Bauchi",      psh: 5.7, zone: "North East"   },
-      { name: "Bayelsa",     psh: 4.1, zone: "South South"  },
-      { name: "Benue",       psh: 5.0, zone: "North Central"},
-      { name: "Borno",       psh: 6.0, zone: "North East"   },
-      { name: "Cross River", psh: 4.4, zone: "South South"  },
-      { name: "Delta",       psh: 4.3, zone: "South South"  },
-      { name: "Ebonyi",      psh: 4.8, zone: "South East"   },
-      { name: "Edo",         psh: 4.4, zone: "South South"  },
-      { name: "Ekiti",       psh: 4.7, zone: "South West"   },
-      { name: "Enugu",       psh: 4.8, zone: "South East"   },
-      { name: "FCT (Abuja)", psh: 5.5, zone: "North Central"},
-      { name: "Gombe",       psh: 5.8, zone: "North East"   },
-      { name: "Imo",         psh: 4.5, zone: "South East"   },
-      { name: "Jigawa",      psh: 5.9, zone: "North West"   },
-      { name: "Kaduna",      psh: 5.8, zone: "North West"   },
-      { name: "Kano",        psh: 6.0, zone: "North West"   },
-      { name: "Katsina",     psh: 6.0, zone: "North West"   },
-      { name: "Kebbi",       psh: 5.8, zone: "North West"   },
-      { name: "Kogi",        psh: 4.9, zone: "North Central"},
-      { name: "Kwara",       psh: 4.8, zone: "North Central"},
-      { name: "Lagos",       psh: 4.5, zone: "South West"   },
-      { name: "Nasarawa",    psh: 5.1, zone: "North Central"},
-      { name: "Niger",       psh: 5.3, zone: "North Central"},
-      { name: "Ogun",        psh: 4.6, zone: "South West"   },
-      { name: "Ondo",        psh: 4.6, zone: "South West"   },
-      { name: "Osun",        psh: 4.7, zone: "South West"   },
-      { name: "Oyo",         psh: 4.7, zone: "South West"   },
-      { name: "Plateau",     psh: 5.2, zone: "North Central"},
-      { name: "Rivers",      psh: 4.2, zone: "South South"  },
-      { name: "Sokoto",      psh: 6.2, zone: "North West"   },
-      { name: "Taraba",      psh: 5.3, zone: "North East"   },
-      { name: "Yobe",        psh: 6.1, zone: "North East"   },
-      { name: "Zamfara",     psh: 6.0, zone: "North West"   },
-    ],
-  },
-  {
-    code: "GH", name: "Ghana", flag: "🇬🇭", defaultState: "Greater Accra",
-    states: [
-      { name: "Ahafo",         psh: 5.3, zone: "Forest Belt"     },
-      { name: "Ashanti",       psh: 5.2, zone: "Forest Belt"     },
-      { name: "Bono",          psh: 5.5, zone: "Transition Zone" },
-      { name: "Bono East",     psh: 5.6, zone: "Transition Zone" },
-      { name: "Central",       psh: 4.9, zone: "Coastal"         },
-      { name: "Eastern",       psh: 5.1, zone: "Forest Belt"     },
-      { name: "Greater Accra", psh: 5.0, zone: "Coastal"         },
-      { name: "North East",    psh: 5.9, zone: "Savannah"        },
-      { name: "Northern",      psh: 5.8, zone: "Savannah"        },
-      { name: "Oti",           psh: 5.2, zone: "Transition Zone" },
-      { name: "Savannah",      psh: 5.8, zone: "Savannah"        },
-      { name: "Upper East",    psh: 6.0, zone: "Savannah"        },
-      { name: "Upper West",    psh: 5.9, zone: "Savannah"        },
-      { name: "Volta",         psh: 5.0, zone: "Coastal"         },
-      { name: "Western",       psh: 4.8, zone: "Coastal"         },
-      { name: "Western North", psh: 4.9, zone: "Forest Belt"     },
-    ],
-  },
-];
-
-// ─── Battery Types ─────────────────────────────────────────────────────────
-const BATTERY_TYPES = [
-  {
-    id: "flooded", name: "Flooded Lead-Acid", short: "FLA", icon: "🔋",
-    dod: 0.5, efficiency: 0.85, lifespan: "3–5 years", cycles: "300–500 cycles",
-    color: "#f59e0b",
-    pros: ["Widely available in Nigeria","Easy to find replacements","Simple technology"],
-    cons: ["Requires regular water top-up","Releases hydrogen gas — needs ventilation","Heaviest option","Shallowest depth of discharge"],
-    bestFor: "Maintenance-friendly sites where regular battery checks are manageable",
-    educationNote: "The 'depth of discharge' (DoD) of 50% means you should only use half the rated capacity. A 200Ah battery only gives you 100Ah of usable energy — anything more shortens its life dramatically.",
-  },
-  {
-    id: "agm", name: "AGM Battery", short: "AGM", icon: "⚡",
-    dod: 0.5, efficiency: 0.9, lifespan: "4–7 years", cycles: "500–700 cycles",
-    color: "#3b82f6",
-    pros: ["Sealed — no maintenance","Spill-proof, can be mounted anywhere","Handles high current well","Lower self-discharge"],
-    cons: ["Sensitive to overcharging","50% DoD same as flooded","Requires correct charge settings"],
-    bestFor: "Homes wanting maintenance-free lead-acid batteries",
-    educationNote: "AGM stands for Absorbent Glass Mat — the electrolyte is absorbed into fibreglass mats instead of being liquid. This makes it sealed and spill-proof, ideal for indoor or enclosed installations.",
-  },
-  {
-    id: "gel", name: "Gel Battery", short: "GEL", icon: "🟡",
-    dod: 0.5, efficiency: 0.88, lifespan: "5–8 years", cycles: "500–800 cycles",
-    color: "#8b5cf6",
-    pros: ["Handles heat better than AGM","Sealed and maintenance-free","Good for deep cycling","Long shelf life"],
-    cons: ["Slower charging required","Damaged by fast charging","Requires a compatible charger"],
-    bestFor: "Hot climates or remote setups where charging control is reliable",
-    educationNote: "Gel batteries use silica to turn the electrolyte into a gel-like substance. They perform particularly well in high temperatures — important in Nigeria's climate — but they must be charged slowly with a compatible charger.",
-  },
-  {
-    id: "lithium", name: "Lithium Iron Phosphate", short: "LiFePO₄", icon: "🚀",
-    dod: 0.9, efficiency: 0.97, lifespan: "10–15 years", cycles: "2000–5000 cycles",
-    color: "#10b981",
-    pros: ["90% usable capacity","Lightest weight","No maintenance ever","Charges very fast","Built-in Battery Management System (BMS)"],
-    cons: ["Requires compatible lithium charger/inverter","Less available locally","Needs correct BMS setup"],
-    bestFor: "Long service life, low maintenance, and high usable capacity",
-    educationNote: "LiFePO₄ is the safest lithium chemistry — it won't catch fire like older lithium types. Its 90% DoD means a 200Ah battery gives you 180Ah usable, so fewer modules may be needed for the same usable energy.",
-  },
-];
-
-const SYSTEM_VOLTAGES  = [12,24,48];
-
-const PROPERTY_TYPES = [
-  { id: "flat", label: "Flat / Apartment" },
-  { id: "bungalow", label: "Bungalow" },
-  { id: "duplex", label: "Duplex" },
-  { id: "shop", label: "Shop / Office" },
-];
-
-const INSTALLER_PREFS = [
-  { id: "installer", label: "Use an installer" },
-  { id: "compare", label: "Compare quotes first" },
-  { id: "diy", label: "DIY / supervise closely" },
-];
-
-// ─── Load Profiles ─────────────────────────────────────────────────────────
-const LOAD_PROFILES = [
-  {
-    id: "starter", name: "Basic Starter", icon: "🌅",
-    tag: "Smallest setup", tagColor: "#34d399",
-    description: "Lights, fan, laptop & phone. Daytime use — no overnight loads.",
-    appliances: [
-      { id: "bulb_led",     hoursPerDay: 5  },
-      { id: "fan_ceiling",  hoursPerDay: 8  },
-      { id: "laptop",       hoursPerDay: 6  },
-      { id: "phone_charge", hoursPerDay: 3  },
-      { id: "tv_32",        hoursPerDay: 4  },
-      { id: "router",       hoursPerDay: 10 },
-    ],
-  },
-  {
-    id: "typical", name: "Typical Home", icon: "🏠",
-    tag: "Most popular", tagColor: "#fbbf24",
-    description: "Fridge, fans, TV, decoder & laptop. Day + evening use.",
-    appliances: [
-      { id: "bulb_led",     hoursPerDay: 6  },
-      { id: "fan_ceiling",  hoursPerDay: 12 },
-      { id: "fridge",       hoursPerDay: 10 },
-      { id: "tv_32",        hoursPerDay: 5  },
-      { id: "decoder",      hoursPerDay: 5  },
-      { id: "phone_charge", hoursPerDay: 3  },
-      { id: "router",       hoursPerDay: 24 },
-      { id: "laptop",       hoursPerDay: 4  },
-    ],
-  },
-  {
-    id: "family", name: "Family Home", icon: "👨‍👩‍👧‍👦",
-    tag: "Heavy household", tagColor: "#f97316",
-    description: "Fridge, freezer, multiple fans, big TV & overnight loads.",
-    appliances: [
-      { id: "bulb_led",     hoursPerDay: 8  },
-      { id: "fan_ceiling",  hoursPerDay: 16 },
-      { id: "fan_standing", hoursPerDay: 8  },
-      { id: "fridge",       hoursPerDay: 12 },
-      { id: "freezer",      hoursPerDay: 12 },
-      { id: "tv_43",        hoursPerDay: 6  },
-      { id: "decoder",      hoursPerDay: 6  },
-      { id: "phone_charge", hoursPerDay: 4  },
-      { id: "router",       hoursPerDay: 24 },
-      { id: "laptop",       hoursPerDay: 3  },
-    ],
-  },
-  {
-    id: "generator", name: "Generator Replacement", icon: "⚡",
-    tag: "Full replacement", tagColor: "#ef4444",
-    description: "AC, washing machine + all household loads. Fully replaces a generator.",
-    appliances: [
-      { id: "bulb_led",        hoursPerDay: 8  },
-      { id: "fan_ceiling",     hoursPerDay: 12 },
-      { id: "fridge",          hoursPerDay: 12 },
-      { id: "freezer",         hoursPerDay: 12 },
-      { id: "tv_43",           hoursPerDay: 6  },
-      { id: "decoder",         hoursPerDay: 6  },
-      { id: "phone_charge",    hoursPerDay: 4  },
-      { id: "router",          hoursPerDay: 24 },
-      { id: "ac_1hp",          hoursPerDay: 6  },
-      { id: "washing_machine", hoursPerDay: 1  },
-      { id: "laptop",          hoursPerDay: 4  },
-    ],
-  },
-];
+import {
+  APPLIANCES,
+  BATTERY_TYPES,
+  COUNTRIES,
+  INSTALLER_PREFS,
+  LOAD_PROFILES,
+  PROPERTY_TYPES,
+  SYSTEM_VOLTAGES,
+} from "./data";
+import { getTheme, hexToRgb } from "./theme";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
-function hexToRgb(hex) {
-  return `${parseInt(hex.slice(1,3),16)},${parseInt(hex.slice(3,5),16)},${parseInt(hex.slice(5,7),16)}`;
-}
-
 function profileEstimatedWh(profile) {
   return profile.appliances.reduce((s, p) => {
     const b = APPLIANCES.find((a) => a.id === p.id);
@@ -247,6 +43,43 @@ function getStepHelp(step) {
     default:
       return "Use the guide to help you move through the steps. Each step affects the final system size and reliability.";
   }
+}
+
+async function copyTextToClipboard(text) {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch { /* fall through to legacy copy */ }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand("copy");
+    ta.remove();
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
+// ─── Summary row (module level so React doesn't remount it each render) ────
+function SummaryRow({ T, icon, label, value, sub, color }) {
+  return (
+    <div style={{ display:"flex", alignItems:"center", gap:"10px", padding:"10px 14px", borderBottom:`1px solid ${T.summaryBorder}` }}>
+      <span style={{ fontSize:"18px", flexShrink:0 }} aria-hidden="true">{icon}</span>
+      <div style={{ flex:1, minWidth:0 }}>
+        <div style={{ fontSize:"10px", color:T.label, fontWeight:"600", textTransform:"uppercase", letterSpacing:"0.8px" }}>{label}</div>
+        <div style={{ fontSize:"13px", fontWeight:"700", color: color||T.sectionTitle, marginTop:"1px", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{value}</div>
+        {sub && <div style={{ fontSize:"11px", color:T.sectionSub, marginTop:"1px" }}>{sub}</div>}
+      </div>
+    </div>
+  );
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────
@@ -282,12 +115,35 @@ export default function SolarCalculator() {
   const [windowWidth,   setWindowWidth]   = useState(
     () => (typeof window !== "undefined" ? window.innerWidth : 1200)
   );
+  const [toast, setToast] = useState(null);
+  const [voltageManuallySet, setVoltageManuallySet] = useState(false);
+  const countryDropdownRef = useRef(null);
 
   useEffect(() => {
     const h = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", h);
     return () => window.removeEventListener("resize", h);
   }, []);
+
+  // Auto-dismiss toast notifications.
+  useEffect(() => {
+    if (!toast) return undefined;
+    const t = setTimeout(() => setToast(null), 2600);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  // Close country dropdown on outside click.
+  useEffect(() => {
+    if (!countryDropdownOpen) return undefined;
+    const onPointerDown = (e) => {
+      if (countryDropdownRef.current && !countryDropdownRef.current.contains(e.target)) {
+        setCountryDropdownOpen(false);
+        setCountrySearch("");
+      }
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [countryDropdownOpen]);
 
   const isDesktop = windowWidth >= 900;
 
@@ -362,9 +218,13 @@ export default function SolarCalculator() {
     const text = createExportText(r, reportSections);
     if (navigator.share) {
       try { await navigator.share({ title: "SolarSizer recommendation", text }); return; }
-      catch { /* fall back to clipboard */ }
+      catch (err) {
+        // User dismissed the share sheet — don't copy behind their back.
+        if (err?.name === "AbortError") return;
+      }
     }
-    await navigator.clipboard?.writeText(text);
+    const ok = await copyTextToClipboard(text);
+    setToast(ok ? "✅ Summary copied to clipboard" : "⚠️ Copy failed — use Download instead");
   }
 
   function downloadRecommendation(r, reportSections) {
@@ -405,6 +265,10 @@ export default function SolarCalculator() {
   }
 
   function compute() {
+    if (totalWh <= 0) {
+      setToast("⚠️ Add at least one appliance with usage hours first");
+      return;
+    }
     setResults(calcResults({ appliances, country, location, autonomyDays, batteryType, systemVoltage, batteryTypes: BATTERY_TYPES, countries: COUNTRIES }));
     setStep(4);
   }
@@ -433,56 +297,12 @@ export default function SolarCalculator() {
     setAddingCustom(false);
     setActiveProfile(null);
     setAssistantMode("why");
+    setVoltageManuallySet(false);
+    setToast(null);
   }
 
   // ── Theme ──────────────────────────────────────────────────────────────────
-  const T = darkMode ? {
-    appBg:"linear-gradient(160deg,#080d1a 0%,#0b1520 55%,#06150e 100%)",
-    appColor:"#e2eae4",pageBg:"transparent",
-    headerBg:"rgba(10,16,30,0.92)",headerBorder:"rgba(255,195,0,0.12)",headerSub:"rgba(255,255,255,0.35)",
-    stepDotInactive:"rgba(255,255,255,0.05)",stepDotBorder:"rgba(255,255,255,0.09)",stepLabelOff:"rgba(255,255,255,0.22)",
-    sectionTitle:"#f1f5f2",sectionSub:"rgba(255,255,255,0.42)",label:"rgba(255,255,255,0.3)",
-    card:"rgba(255,255,255,0.035)",cardBorder:"rgba(255,255,255,0.075)",
-    panelBg:"rgba(255,255,255,0.03)",panelBorder:"rgba(255,255,255,0.07)",
-    inputBg:"rgba(255,255,255,0.07)",inputBdr:"rgba(255,255,255,0.11)",inputClr:"#fff",
-    btnBg:"rgba(255,255,255,0.05)",btnBdr:"rgba(255,255,255,0.09)",btnClr:"rgba(255,255,255,0.55)",
-    infoBoxBg:"rgba(251,191,36,0.06)",infoBoxBdr:"rgba(251,191,36,0.18)",infoBoxClr:"rgba(255,255,255,0.6)",
-    totalBarBg:"linear-gradient(90deg,rgba(251,191,36,0.12),rgba(16,185,129,0.08))",totalBarBdr:"rgba(251,191,36,0.22)",totalLbl:"rgba(255,255,255,0.45)",
-    pillBg:"rgba(255,255,255,0.04)",pillBdr:"rgba(255,255,255,0.07)",pillClr:"rgba(255,255,255,0.38)",
-    toggleBg:"rgba(255,255,255,0.07)",toggleBdr:"rgba(255,255,255,0.11)",toggleClr:"rgba(255,255,255,0.65)",
-    dropdownBg:"#0d1b2a",dropdownBdr:"rgba(251,191,36,0.28)",dropdownItemBdr:"rgba(255,255,255,0.04)",
-    dropdownClr:"rgba(255,255,255,0.72)",dropdownMuted:"rgba(255,255,255,0.28)",dropdownFooter:"rgba(255,255,255,0.06)",
-    batExpBdr:"rgba(255,255,255,0.05)",metaItemBg:"rgba(255,255,255,0.04)",metaLbl:"rgba(255,255,255,0.32)",metaVal:"#fff",
-    proCardBg:"rgba(16,185,129,0.05)",proCardBdr:"rgba(16,185,129,0.13)",conCardBg:"rgba(239,68,68,0.05)",conCardBdr:"rgba(239,68,68,0.13)",proConsItem:"rgba(255,255,255,0.55)",
-    educNoteBg:"rgba(251,191,36,0.06)",educNoteBdr:"rgba(251,191,36,0.18)",educNoteClr:"rgba(255,255,255,0.57)",
-    bestFor:"rgba(255,255,255,0.4)",explainBg:"rgba(255,255,255,0.03)",explainBdr:"rgba(255,255,255,0.065)",explainClr:"rgba(255,255,255,0.52)",
-    resultLbl:"rgba(255,255,255,0.32)",shadow:"0 20px 60px rgba(0,0,0,0.65)",
-    profileCardBg:"rgba(255,255,255,0.03)",profileCardBdr:"rgba(255,255,255,0.07)",profileDesc:"rgba(255,255,255,0.37)",profileWh:"rgba(255,255,255,0.22)",
-    divider:"rgba(255,255,255,0.07)",summaryRow:"rgba(255,255,255,0.03)",summaryBorder:"rgba(255,255,255,0.06)",
-  } : {
-    appBg:"linear-gradient(160deg,#fefaf2 0%,#eef6ff 55%,#edfaf3 100%)",
-    appColor:"#111827",pageBg:"transparent",
-    headerBg:"rgba(255,255,255,0.88)",headerBorder:"rgba(245,158,11,0.18)",headerSub:"#9ca3af",
-    stepDotInactive:"rgba(0,0,0,0.05)",stepDotBorder:"rgba(0,0,0,0.1)",stepLabelOff:"#9ca3af",
-    sectionTitle:"#111827",sectionSub:"#6b7280",label:"#9ca3af",
-    card:"#ffffff",cardBorder:"rgba(0,0,0,0.07)",
-    panelBg:"#ffffff",panelBorder:"rgba(0,0,0,0.08)",
-    inputBg:"rgba(0,0,0,0.04)",inputBdr:"rgba(0,0,0,0.11)",inputClr:"#111827",
-    btnBg:"#ffffff",btnBdr:"rgba(0,0,0,0.09)",btnClr:"#374151",
-    infoBoxBg:"rgba(251,191,36,0.07)",infoBoxBdr:"rgba(245,158,11,0.28)",infoBoxClr:"#4b5563",
-    totalBarBg:"linear-gradient(90deg,rgba(251,191,36,0.1),rgba(16,185,129,0.07))",totalBarBdr:"rgba(245,158,11,0.28)",totalLbl:"#6b7280",
-    pillBg:"rgba(0,0,0,0.04)",pillBdr:"rgba(0,0,0,0.08)",pillClr:"#6b7280",
-    toggleBg:"rgba(0,0,0,0.055)",toggleBdr:"rgba(0,0,0,0.09)",toggleClr:"#374151",
-    dropdownBg:"#ffffff",dropdownBdr:"rgba(245,158,11,0.38)",dropdownItemBdr:"rgba(0,0,0,0.04)",
-    dropdownClr:"#374151",dropdownMuted:"#9ca3af",dropdownFooter:"rgba(0,0,0,0.055)",
-    batExpBdr:"rgba(0,0,0,0.06)",metaItemBg:"rgba(0,0,0,0.04)",metaLbl:"#9ca3af",metaVal:"#111827",
-    proCardBg:"rgba(16,185,129,0.05)",proCardBdr:"rgba(16,185,129,0.18)",conCardBg:"rgba(239,68,68,0.04)",conCardBdr:"rgba(239,68,68,0.16)",proConsItem:"#4b5563",
-    educNoteBg:"rgba(251,191,36,0.07)",educNoteBdr:"rgba(245,158,11,0.22)",educNoteClr:"#4b5563",
-    bestFor:"#6b7280",explainBg:"rgba(0,0,0,0.03)",explainBdr:"rgba(0,0,0,0.07)",explainClr:"#4b5563",
-    resultLbl:"#9ca3af",shadow:"0 20px 60px rgba(0,0,0,0.12)",
-    profileCardBg:"#ffffff",profileCardBdr:"rgba(0,0,0,0.08)",profileDesc:"#6b7280",profileWh:"#9ca3af",
-    divider:"rgba(0,0,0,0.07)",summaryRow:"rgba(0,0,0,0.02)",summaryBorder:"rgba(0,0,0,0.06)",
-  };
+  const T = getTheme(darkMode);
 
   // ── Shared micro-styles ────────────────────────────────────────────────────
   const infoBox  = { background:T.infoBoxBg, border:`1px solid ${T.infoBoxBdr}`, borderRadius:"12px", padding:"14px 16px", fontSize:"13px", color:T.infoBoxClr, lineHeight:"1.65" };
@@ -499,19 +319,6 @@ export default function SolarCalculator() {
   const stateInfo    = cd?.states.find((s) => s.name === location);
   const selBattery   = BATTERY_TYPES.find((b) => b.id === batteryType);
   const selProfile   = LOAD_PROFILES.find((p) => p.id === activeProfile);
-
-  function SummaryRow({ icon, label, value, sub, color }) {
-    return (
-      <div style={{ display:"flex", alignItems:"center", gap:"10px", padding:"10px 14px", borderBottom:`1px solid ${T.summaryBorder}` }}>
-        <span style={{ fontSize:"18px", flexShrink:0 }}>{icon}</span>
-        <div style={{ flex:1, minWidth:0 }}>
-          <div style={{ fontSize:"10px", color:T.label, fontWeight:"600", textTransform:"uppercase", letterSpacing:"0.8px" }}>{label}</div>
-          <div style={{ fontSize:"13px", fontWeight:"700", color: color||T.sectionTitle, marginTop:"1px", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{value}</div>
-          {sub && <div style={{ fontSize:"11px", color:T.sectionSub, marginTop:"1px" }}>{sub}</div>}
-        </div>
-      </div>
-    );
-  }
 
   function renderHelpBanner() {
     if (!showStepHelp) return null;
@@ -536,6 +343,7 @@ export default function SolarCalculator() {
 
         {/* Location */}
         <SummaryRow
+          T={T}
           icon={cd?.flag || "📍"}
           label="Location"
           value={`${location}, ${cd?.name}`}
@@ -543,6 +351,7 @@ export default function SolarCalculator() {
         />
 
         <SummaryRow
+          T={T}
           icon="🎯"
           label="Goal"
           value={getBackupTargetLabel()}
@@ -552,6 +361,7 @@ export default function SolarCalculator() {
         {/* Load */}
         {step >= 1 && (
           <SummaryRow
+            T={T}
             icon={selProfile ? selProfile.icon : "🔌"}
             label="Load Profile"
             value={selProfile ? selProfile.name : appliances.length ? "Custom setup" : "Not configured"}
@@ -563,8 +373,8 @@ export default function SolarCalculator() {
         {/* System */}
         {step >= 2 && (
           <>
-            <SummaryRow icon="⚡" label="System Voltage" value={`${systemVoltage}V DC`} sub={`${autonomyDays} day${autonomyDays > 1 ? "s" : ""} battery autonomy`} />
-            <SummaryRow icon={selBattery?.icon || "🔋"} label="Battery Type" value={selBattery?.name || "—"} sub={`${(selBattery?.dod||0)*100}% DoD · ${selBattery?.lifespan}`} />
+            <SummaryRow T={T} icon="⚡" label="System Voltage" value={`${systemVoltage}V DC`} sub={`${autonomyDays} day${autonomyDays > 1 ? "s" : ""} battery autonomy`} />
+            <SummaryRow T={T} icon={selBattery?.icon || "🔋"} label="Battery Type" value={selBattery?.name || "—"} sub={`${(selBattery?.dod||0)*100}% DoD · ${selBattery?.lifespan}`} />
           </>
         )}
 
@@ -651,7 +461,7 @@ export default function SolarCalculator() {
             <div style={{ display:"grid", gridTemplateColumns: isDesktop?"1fr 1fr":"1fr", gap:"12px" }}>
               <div>
                 <div style={{ fontSize:"12px", color:T.label, marginBottom:"6px" }}>Backup target</div>
-                <select value={backupTarget} onChange={(e) => { setBackupTarget(e.target.value); setAutonomyDays(autonomyDaysForTarget(e.target.value)); }} style={{ ...numInput, width:"100%", padding:"11px 12px", boxSizing:"border-box" }}>
+                <select aria-label="Backup target" value={backupTarget} onChange={(e) => { setBackupTarget(e.target.value); setAutonomyDays(autonomyDaysForTarget(e.target.value)); }} style={{ ...numInput, width:"100%", padding:"11px 12px", boxSizing:"border-box" }}>
                   <option value="daytime">Daytime essentials</option>
                   <option value="overnight">Overnight backup</option>
                   <option value="full-day">Full day backup</option>
@@ -664,7 +474,7 @@ export default function SolarCalculator() {
               ].map(([label, options, selected, setter]) => (
                 <div key={label}>
                   <div style={{ fontSize:"12px", color:T.label, marginBottom:"6px" }}>{label}</div>
-                  <select value={selected} onChange={(e) => setter(e.target.value)} style={{ ...numInput, width:"100%", padding:"11px 12px", boxSizing:"border-box" }}>
+                  <select aria-label={label} value={selected} onChange={(e) => setter(e.target.value)} style={{ ...numInput, width:"100%", padding:"11px 12px", boxSizing:"border-box" }}>
                     {options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
                   </select>
                 </div>
@@ -686,17 +496,17 @@ export default function SolarCalculator() {
           </div>
 
           {/* Country dropdown */}
-          <div style={labelSt}>Country</div>
-          <div style={{ position:"relative", marginBottom:"24px" }}>
-            <button onClick={() => { setCountryDropdownOpen(!countryDropdownOpen); setCountrySearch(""); }} style={{ width:"100%", display:"flex", alignItems:"center", gap:"12px", padding:"14px 18px", borderRadius:"14px", cursor:"pointer", textAlign:"left", background: countryDropdownOpen?"rgba(251,191,36,0.07)":T.card, border: countryDropdownOpen?`2px solid #f59e0b`:`1px solid ${T.cardBorder}`, color:T.appColor, fontFamily:"'Outfit',sans-serif" }}>
-              <span style={{ fontSize:"22px" }}>{cd.flag}</span>
+          <div style={labelSt} id="country-label">Country</div>
+          <div ref={countryDropdownRef} onKeyDown={(e) => { if (e.key === "Escape") { setCountryDropdownOpen(false); setCountrySearch(""); } }} style={{ position:"relative", marginBottom:"24px" }}>
+            <button aria-haspopup="listbox" aria-expanded={countryDropdownOpen} aria-labelledby="country-label" onClick={() => { setCountryDropdownOpen(!countryDropdownOpen); setCountrySearch(""); }} style={{ width:"100%", display:"flex", alignItems:"center", gap:"12px", padding:"14px 18px", borderRadius:"14px", cursor:"pointer", textAlign:"left", background: countryDropdownOpen?"rgba(251,191,36,0.07)":T.card, border: countryDropdownOpen?`2px solid #f59e0b`:`1px solid ${T.cardBorder}`, color:T.appColor, fontFamily:"'Outfit',sans-serif" }}>
+              <span style={{ fontSize:"22px" }} aria-hidden="true">{cd.flag}</span>
               <span style={{ fontSize:"15px", fontWeight:"600", flex:1 }}>{cd.name}</span>
               <span style={{ color:T.dropdownMuted, transform: countryDropdownOpen?"rotate(180deg)":"rotate(0deg)", transition:"transform 0.2s" }}>▼</span>
             </button>
             {countryDropdownOpen && (
               <div style={{ position:"absolute", top:"calc(100% + 6px)", left:0, right:0, zIndex:100, background:T.dropdownBg, border:`1px solid ${T.dropdownBdr}`, borderRadius:"14px", overflow:"hidden", boxShadow:T.shadow }}>
                 <div style={{ padding:"10px 12px", borderBottom:`1px solid ${T.dropdownFooter}` }}>
-                  <input autoFocus placeholder="Search country…" value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)} style={{ width:"100%", padding:"9px 12px", borderRadius:"8px", background:T.inputBg, border:`1px solid ${T.inputBdr}`, color:T.inputClr, fontSize:"14px", outline:"none", boxSizing:"border-box", fontFamily:"'Outfit',sans-serif" }} />
+                  <input autoFocus aria-label="Search country" placeholder="Search country…" value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)} style={{ width:"100%", padding:"9px 12px", borderRadius:"8px", background:T.inputBg, border:`1px solid ${T.inputBdr}`, color:T.inputClr, fontSize:"14px", outline:"none", boxSizing:"border-box", fontFamily:"'Outfit',sans-serif" }} />
                 </div>
                 <div style={{ maxHeight:"240px", overflowY:"auto" }}>
                   {filteredCountries.length === 0
@@ -753,7 +563,7 @@ export default function SolarCalculator() {
 
           <div style={infoBox}>
             💡 <strong style={{ color:"#fbbf24" }}>What are Peak Sun Hours?</strong><br />
-            PSH counts only hours where sunlight intensity is sufficient for panels to produce their rated output. Northern/inland areas get more PSH than coastal zones.
+            PSH counts only hours where sunlight intensity is sufficient for panels to produce their rated output. Northern/inland areas get more PSH than coastal zones. Values shown are approximate long-term averages (NASA POWER / Global Solar Atlas).
           </div>
 
           {selectedState && (
@@ -848,10 +658,10 @@ export default function SolarCalculator() {
             <div style={card}>
               <div style={{ fontSize:"13px", fontWeight:"700", marginBottom:"12px", color:"#fbbf24" }}>Custom Appliance</div>
               <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
-                <input placeholder="Name (e.g. CCTV Camera)" value={customName} onChange={(e) => setCustomName(e.target.value)} style={{ ...numInput, width:"100%", textAlign:"left", padding:"10px 12px", boxSizing:"border-box" }} />
+                <input aria-label="Custom appliance name" placeholder="Name (e.g. CCTV Camera)" value={customName} onChange={(e) => setCustomName(e.target.value)} style={{ ...numInput, width:"100%", textAlign:"left", padding:"10px 12px", boxSizing:"border-box" }} />
                 <div style={{ display:"flex", gap:"8px" }}>
-                  <input placeholder="Watts" type="number" value={customWatts} onChange={(e) => setCustomWatts(e.target.value)} style={{ ...numInput, flex:1, textAlign:"left", padding:"10px 12px" }} />
-                  <input placeholder="Hrs/day" type="number" value={customHours} onChange={(e) => setCustomHours(e.target.value)} style={{ ...numInput, flex:1, textAlign:"left", padding:"10px 12px" }} />
+                  <input aria-label="Custom appliance watts" placeholder="Watts" type="number" value={customWatts} onChange={(e) => setCustomWatts(e.target.value)} style={{ ...numInput, flex:1, textAlign:"left", padding:"10px 12px" }} />
+                  <input aria-label="Custom appliance hours per day" placeholder="Hrs/day" type="number" value={customHours} onChange={(e) => setCustomHours(e.target.value)} style={{ ...numInput, flex:1, textAlign:"left", padding:"10px 12px" }} />
                 </div>
                 <div style={{ display:"flex", gap:"8px" }}>
                   <button style={primBtn({ marginTop:0, flex:1, padding:"10px" })} onClick={addCustomAppliance}>Add</button>
@@ -867,33 +677,34 @@ export default function SolarCalculator() {
               <div style={{ ...labelSt, marginBottom:"10px" }}>Your Appliances — tap any value to edit</div>
               {appliances.map((a) => {
                 const wh          = applianceWh(a);
-                const isCustomW   = a.watts !== APPLIANCES.find((x) => x.id === a.id)?.watts;
+                const baseAppl    = APPLIANCES.find((x) => x.id === a.id);
+                const isCustomW   = baseAppl ? a.watts !== baseAppl.watts : false;
                 return (
                   <div key={a.id} style={{ display:"flex", flexDirection:"column", gap:"8px", padding:"12px 14px", background:T.card, border:`1px solid ${T.cardBorder}`, borderRadius:"14px", marginBottom:"8px" }}>
                     <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
                       <span style={{ fontSize:"20px" }}>{a.icon}</span>
                       <span style={{ flex:1, fontSize:"13px", fontWeight:"600", color:T.sectionTitle }}>{a.name}</span>
                       {isCustomW && <span style={{ fontSize:"10px", background:"rgba(251,191,36,0.1)", border:"1px solid rgba(251,191,36,0.28)", color:"#d97706", borderRadius:"6px", padding:"2px 7px", fontWeight:"600" }}>Custom W</span>}
-                      <button onClick={() => removeAppliance(a.id)} style={{ background:"rgba(239,68,68,0.1)", border:"none", borderRadius:"8px", color:"#ef4444", padding:"4px 9px", cursor:"pointer", fontSize:"14px" }}>✕</button>
+                      <button aria-label={`Remove ${a.name}`} onClick={() => removeAppliance(a.id)} style={{ background:"rgba(239,68,68,0.1)", border:"none", borderRadius:"8px", color:"#ef4444", padding:"4px 9px", cursor:"pointer", fontSize:"14px" }}>✕</button>
                     </div>
                     <div style={{ display:"grid", gridTemplateColumns: isDesktop?"1fr 1fr 1fr 92px":"1fr 1fr", gap:"8px", alignItems:"end" }}>
                       <div>
                         <div style={{ ...labelSt, marginBottom:"3px" }}>⚡ Watts</div>
                         <div style={{ position:"relative" }}>
-                          <input type="number" value={a.watts} min="1" max="10000" onChange={(e) => updateAppliance(a.id,"watts",e.target.value)} style={{ ...numInput, width:"100%", textAlign:"left", padding:"7px 28px 7px 10px", boxSizing:"border-box" }} />
+                          <input type="number" aria-label={`${a.name} watts`} value={a.watts} min="1" max="10000" onChange={(e) => updateAppliance(a.id,"watts",e.target.value)} style={{ ...numInput, width:"100%", textAlign:"left", padding:"7px 28px 7px 10px", boxSizing:"border-box" }} />
                           <span style={{ position:"absolute", right:"8px", top:"50%", transform:"translateY(-50%)", fontSize:"10px", color:T.label, pointerEvents:"none" }}>W</span>
                         </div>
                       </div>
                       <div>
                         <div style={{ ...labelSt, marginBottom:"3px" }}>⏱ Hrs / Day</div>
                         <div style={{ position:"relative" }}>
-                          <input type="number" value={a.hoursPerDay} min="0" max="24" step="0.5" onChange={(e) => updateAppliance(a.id,"hoursPerDay",e.target.value)} style={{ ...numInput, width:"100%", textAlign:"left", padding:"7px 24px 7px 10px", boxSizing:"border-box" }} />
+                          <input type="number" aria-label={`${a.name} hours per day`} value={a.hoursPerDay} min="0" max="24" step="0.5" onChange={(e) => updateAppliance(a.id,"hoursPerDay",e.target.value)} style={{ ...numInput, width:"100%", textAlign:"left", padding:"7px 24px 7px 10px", boxSizing:"border-box" }} />
                           <span style={{ position:"absolute", right:"8px", top:"50%", transform:"translateY(-50%)", fontSize:"10px", color:T.label, pointerEvents:"none" }}>h</span>
                         </div>
                       </div>
                       <div>
                         <div style={{ ...labelSt, marginBottom:"3px" }}>Qty</div>
-                        <input type="number" value={a.qty || 1} min="1" max="50" step="1" onChange={(e) => updateAppliance(a.id,"qty",e.target.value)} style={{ ...numInput, width:"100%", textAlign:"left", padding:"7px 10px", boxSizing:"border-box" }} />
+                        <input type="number" aria-label={`${a.name} quantity`} value={a.qty || 1} min="1" max="50" step="1" onChange={(e) => updateAppliance(a.id,"qty",e.target.value)} style={{ ...numInput, width:"100%", textAlign:"left", padding:"7px 10px", boxSizing:"border-box" }} />
                       </div>
                       <div style={{ textAlign:isDesktop?"right":"left" }}>
                         <div style={{ ...labelSt, marginBottom:"3px" }}>Daily</div>
@@ -927,10 +738,12 @@ export default function SolarCalculator() {
             💡 <strong style={{ color:"#fbbf24" }}>Tip:</strong> Be honest about usage hours. A fridge typically runs 8–12 hrs/day. An AC might run 5–6 hrs. Accurate inputs = accurate sizing.
           </div>
 
-          <button style={{ ...primBtn({}), opacity: appliances.length===0?0.4:1 }} disabled={appliances.length===0}
+          <button style={{ ...primBtn({}), opacity: appliances.length===0||totalWh<=0?0.4:1 }} disabled={appliances.length===0||totalWh<=0}
             onClick={() => {
-              const pw = appliances.reduce((s,a) => s + appliancePeakWatts(a), 0);
-              setSystemVoltage(getRecommendedVoltage(totalWh, pw));
+              if (!voltageManuallySet) {
+                const pw = appliances.reduce((s,a) => s + appliancePeakWatts(a), 0);
+                setSystemVoltage(getRecommendedVoltage(totalWh, pw));
+              }
               setStep(2);
             }}>
             Continue → Backup Duration
@@ -975,7 +788,7 @@ export default function SolarCalculator() {
             {SYSTEM_VOLTAGES.map((v) => {
               const isRec = v === recommendedV, isSel = systemVoltage === v;
               return (
-                <button key={v} onClick={() => setSystemVoltage(v)} style={{ flex:1, padding: isRec?"22px 14px 14px":"16px 14px", borderRadius:"14px", cursor:"pointer", textAlign:"center", fontWeight: isSel?"700":"400", fontSize:"15px", position:"relative", border: isSel?(isRec?"2px solid #10b981":"2px solid #ef4444"):`1px solid ${T.cardBorder}`, background: isSel?(isRec?"rgba(16,185,129,0.09)":"rgba(239,68,68,0.07)"):T.card, color: isSel?(isRec?"#059669":"#ef4444"):T.btnClr, fontFamily:"'Outfit',sans-serif" }}>
+                <button key={v} onClick={() => { setSystemVoltage(v); setVoltageManuallySet(true); }} style={{ flex:1, padding: isRec?"22px 14px 14px":"16px 14px", borderRadius:"14px", cursor:"pointer", textAlign:"center", fontWeight: isSel?"700":"400", fontSize:"15px", position:"relative", border: isSel?(isRec?"2px solid #10b981":"2px solid #ef4444"):`1px solid ${T.cardBorder}`, background: isSel?(isRec?"rgba(16,185,129,0.09)":"rgba(239,68,68,0.07)"):T.card, color: isSel?(isRec?"#059669":"#ef4444"):T.btnClr, fontFamily:"'Outfit',sans-serif" }}>
                   {isRec && <div style={{ position:"absolute", top:"6px", left:"50%", transform:"translateX(-50%)", fontSize:"9px", fontWeight:"700", color:"#059669", background:"rgba(16,185,129,0.1)", borderRadius:"4px", padding:"1px 6px", whiteSpace:"nowrap" }}>✦ BEST FIT</div>}
                   <span style={{ fontSize:"20px", fontWeight:"800" }}>{v}V</span>
                 </button>
@@ -987,7 +800,7 @@ export default function SolarCalculator() {
             <div style={{ background:"rgba(239,68,68,0.06)", border:"1px solid rgba(239,68,68,0.22)", borderRadius:"14px", padding:"14px 16px", marginBottom:"4px" }}>
               <div style={{ fontSize:"13px", fontWeight:"700", color:"#ef4444", marginBottom:"10px" }}>⚠️ {systemVoltage}V is below what your load requires</div>
               {warning.reasons.map((r,i) => <div key={i} style={{ fontSize:"13px", color:T.infoBoxClr, lineHeight:"1.6", marginBottom:"5px" }}>• {r}</div>)}
-              <button onClick={() => setSystemVoltage(warning.recommendedV)} style={{ marginTop:"10px", padding:"8px 16px", borderRadius:"10px", border:"1px solid rgba(16,185,129,0.3)", background:"rgba(16,185,129,0.1)", color:"#059669", fontSize:"13px", fontWeight:"700", cursor:"pointer", fontFamily:"'Outfit',sans-serif" }}>Switch to {warning.recommendedV}V (Recommended)</button>
+              <button onClick={() => { setSystemVoltage(warning.recommendedV); setVoltageManuallySet(true); }} style={{ marginTop:"10px", padding:"8px 16px", borderRadius:"10px", border:"1px solid rgba(16,185,129,0.3)", background:"rgba(16,185,129,0.1)", color:"#059669", fontSize:"13px", fontWeight:"700", cursor:"pointer", fontFamily:"'Outfit',sans-serif" }}>Switch to {warning.recommendedV}V (Recommended)</button>
             </div>
           ) : (
             <div style={{ ...infoBox, background:"rgba(16,185,129,0.06)", borderColor:"rgba(16,185,129,0.2)", marginTop:0 }}>
@@ -1020,7 +833,15 @@ export default function SolarCalculator() {
             const isSel = batteryType === bat.id;
             const isExp = expandedBattery === bat.id;
             return (
-              <div key={bat.id} onClick={() => setExpandedBattery(isExp ? null : bat.id)} style={{ background: isSel?`rgba(${hexToRgb(bat.color)},0.07)`:T.card, border: isSel?`2px solid ${bat.color}`:`1px solid ${T.cardBorder}`, borderRadius:"16px", marginBottom:"10px", overflow:"hidden", cursor:"pointer" }}>
+              <div
+                key={bat.id}
+                role="button"
+                tabIndex={0}
+                aria-expanded={isExp}
+                aria-label={`${bat.name} — ${isExp ? "collapse" : "expand"} details`}
+                onClick={() => setExpandedBattery(isExp ? null : bat.id)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpandedBattery(isExp ? null : bat.id); } }}
+                style={{ background: isSel?`rgba(${hexToRgb(bat.color)},0.07)`:T.card, border: isSel?`2px solid ${bat.color}`:`1px solid ${T.cardBorder}`, borderRadius:"16px", marginBottom:"10px", overflow:"hidden", cursor:"pointer" }}>
                 <div style={{ display:"flex", alignItems:"center", gap:"14px", padding: isDesktop?"16px 20px":"14px 16px" }}>
                   <span style={{ fontSize:"24px" }}>{bat.icon}</span>
                   <div style={{ flex:1 }}>
@@ -1086,6 +907,8 @@ export default function SolarCalculator() {
         "This is an estimate. Ask an installer to confirm load test, cable size, roof space, and battery chemistry.",
         heavyLoads.length ? `High-draw loads detected: ${heavyLoads.join(", ")}. Confirm inverter surge rating before installation.` : null,
         acDaily ? "Daily AC use needs careful inverter surge sizing, dedicated circuits, and realistic runtime expectations." : null,
+        r.battery.parallelStrings > 3 && batteryType !== "lithium" ? `${r.battery.parallelStrings} parallel battery strings exceeds the recommended maximum of 3 for lead-acid banks. Consider a higher system voltage, larger batteries, or lithium.` : null,
+        batteryType === "lithium" ? "Lithium banks are commonly sold as single 24V or 48V rack units — the 12V module count shown is an equivalent-capacity guide, not a shopping list." : null,
       ].filter(Boolean);
       const nextAction = installerPreference === "diy"
           ? "Next best action: create a parts list and have a licensed technician verify cable sizing, breakers, grounding, and battery protection."
@@ -1173,8 +996,8 @@ export default function SolarCalculator() {
             </div>
           ) : (
             <div style={{ background:T.explainBg, border:`1px solid ${T.explainBdr}`, borderRadius:"14px", padding: isDesktop?"18px 20px":"14px", fontSize:"13px", color:T.explainClr, lineHeight:"1.75", marginBottom:"20px" }}>
-              <strong style={{ color:"#fbbf24" }}>🔋 Battery:</strong> {r.totalWh.toLocaleString()} Wh × {autonomyDays} day(s), adjusted for {r.bat.name}'s {r.bat.dod*100}% DoD → {r.battery.physicalBatteryCount} × {r.battery.ah}Ah {r.battery.baseVoltage}V batteries ({r.battery.wiringText}).<br /><br />
-              <strong style={{ color:"#10b981" }}>☀️ Panels:</strong> {r.totalWh.toLocaleString()} Wh ÷ {r.bat.efficiency*100}% efficiency ÷ {r.psh} PSH × 1.25 safety factor = {r.panels.totalWatts}W → {r.panels.count} × {r.panels.watts}W panels, needing roughly {r.panels.roofAreaSqm}sqm clear roof space.<br /><br />
+              <strong style={{ color:"#fbbf24" }}>🔋 Battery:</strong> {r.totalWh.toLocaleString()} Wh ÷ {Math.round(INVERTER_EFFICIENCY*100)}% inverter efficiency × {autonomyDays} day(s), adjusted for {r.bat.name}'s {r.bat.dod*100}% DoD → {r.battery.physicalBatteryCount} × {r.battery.ah}Ah {r.battery.baseVoltage}V batteries ({r.battery.wiringText}).<br /><br />
+              <strong style={{ color:"#10b981" }}>☀️ Panels:</strong> {r.totalWh.toLocaleString()} Wh ÷ {Math.round(INVERTER_EFFICIENCY*100)}% inverter efficiency ÷ {r.bat.efficiency*100}% battery efficiency ÷ {r.psh} PSH × 1.25 safety factor = {r.panels.totalWatts}W → {r.panels.count} × {r.panels.watts}W panels, needing roughly {r.panels.roofAreaSqm}sqm clear roof space.<br /><br />
               <strong style={{ color:"#3b82f6" }}>⚡ Inverter:</strong> Running peak {r.peakWatts}W, surge estimate {r.surgeWatts}W + 25% headroom = {r.inverter}W inverter.<br /><br />
               <strong style={{ color:"#8b5cf6" }}>🔌 Charge Controller:</strong> {r.panels.totalWatts}W ÷ {r.systemVoltage}V × 1.25 = {r.chargeController}A MPPT.
             </div>
@@ -1246,7 +1069,12 @@ export default function SolarCalculator() {
   // ── Root render ────────────────────────────────────────────────────────────
   return (
     <div style={{ minHeight:"100vh", background:T.appBg, fontFamily:"'Outfit',sans-serif", color:T.appColor }}>
-      <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+      {/* ── Toast ── */}
+      {toast && (
+        <div role="status" aria-live="polite" style={{ position:"fixed", bottom:"24px", left:"50%", transform:"translateX(-50%)", zIndex:200, background: darkMode?"#0d1b2a":"#111827", color:"#fff", padding:"12px 20px", borderRadius:"12px", fontSize:"13px", fontWeight:"600", boxShadow:"0 8px 30px rgba(0,0,0,0.35)", maxWidth:"90vw" }}>
+          {toast}
+        </div>
+      )}
 
       {/* ── Header ── */}
       <header style={{ background:T.headerBg, borderBottom:`1px solid ${T.headerBorder}`, backdropFilter:"blur(14px)", WebkitBackdropFilter:"blur(14px)", position:"sticky", top:0, zIndex:50 }}>
@@ -1263,10 +1091,10 @@ export default function SolarCalculator() {
             </div>
           )}
 
-          <button onClick={() => setShowStepHelp(!showStepHelp)} style={{ background:T.toggleBg, border:`1px solid ${T.toggleBdr}`, borderRadius:"20px", padding: isDesktop?"7px 16px":"6px 12px", cursor:"pointer", color:T.toggleClr, fontSize:"13px", display:"flex", alignItems:"center", gap:"6px", fontWeight:"600", flexShrink:0, fontFamily:"'Outfit',sans-serif", marginRight:"8px" }}>
+          <button aria-label={showStepHelp ? "Hide help" : "Show help"} onClick={() => setShowStepHelp(!showStepHelp)} style={{ background:T.toggleBg, border:`1px solid ${T.toggleBdr}`, borderRadius:"20px", padding: isDesktop?"7px 16px":"6px 12px", cursor:"pointer", color:T.toggleClr, fontSize:"13px", display:"flex", alignItems:"center", gap:"6px", fontWeight:"600", flexShrink:0, fontFamily:"'Outfit',sans-serif", marginRight:"8px" }}>
             ❓ {isDesktop && <span>{showStepHelp ? "Hide Help" : "Show Help"}</span>}
           </button>
-          <button onClick={() => setDarkMode(!darkMode)} style={{ background:T.toggleBg, border:`1px solid ${T.toggleBdr}`, borderRadius:"20px", padding: isDesktop?"7px 16px":"6px 12px", cursor:"pointer", color:T.toggleClr, fontSize:"13px", display:"flex", alignItems:"center", gap:"6px", fontWeight:"600", flexShrink:0, fontFamily:"'Outfit',sans-serif" }}>
+          <button aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"} onClick={() => setDarkMode(!darkMode)} style={{ background:T.toggleBg, border:`1px solid ${T.toggleBdr}`, borderRadius:"20px", padding: isDesktop?"7px 16px":"6px 12px", cursor:"pointer", color:T.toggleClr, fontSize:"13px", display:"flex", alignItems:"center", gap:"6px", fontWeight:"600", flexShrink:0, fontFamily:"'Outfit',sans-serif" }}>
             {darkMode ? "☀️" : "🌙"} {isDesktop && <span>{darkMode ? "Light" : "Dark"}</span>}
           </button>
         </div>

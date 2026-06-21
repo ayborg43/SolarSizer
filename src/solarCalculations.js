@@ -1,3 +1,6 @@
+// Typical efficiency of an inverter converting DC battery power to AC loads.
+export const INVERTER_EFFICIENCY = 0.9;
+
 export const SURGE_MULTIPLIERS = {
   fridge: 3,
   freezer: 3,
@@ -54,22 +57,25 @@ export function calcResults({
   const totalWh = appliances.reduce((s, a) => s + applianceWh(a), 0);
   const peakWatts = appliances.reduce((s, a) => s + appliancePeakWatts(a), 0);
   const surgeWatts = Math.max(peakWatts, appliances.reduce((s, a) => s + applianceSurgeWatts(a), 0));
-  const bat = batteryTypes.find((b) => b.id === batteryType);
+  const bat = batteryTypes.find((b) => b.id === batteryType) || batteryTypes[0];
   const countryData = countries.find((c) => c.code === country) || countries[0];
   const stateData = countryData.states.find((s) => s.name === location) || countryData.states[0];
 
-  const usableWh = (totalWh * autonomyDays) / bat.dod;
+  // Energy that must be drawn from the battery, accounting for inverter losses.
+  const dailyFromBattery = totalWh / INVERTER_EFFICIENCY;
+  const usableWh = (dailyFromBattery * autonomyDays) / bat.dod;
   const requiredBankAh = usableWh / systemVoltage;
   const stdSizes = [100, 150, 200, 250];
-  const chosenBatteryAh = stdSizes.find((s) => s >= requiredBankAh / Math.ceil(requiredBankAh / 200)) || 200;
+  const targetAhPerString = requiredBankAh > 0 ? requiredBankAh / Math.ceil(requiredBankAh / 200) : 0;
+  const chosenBatteryAh = stdSizes.find((s) => s >= targetAhPerString) || 200;
   const parallelStrings = Math.max(1, Math.ceil(requiredBankAh / chosenBatteryAh));
   const baseBatteryVoltage = 12;
   const seriesCount = Math.max(1, Math.ceil(systemVoltage / baseBatteryVoltage));
   const physicalBatteryCount = parallelStrings * seriesCount;
 
-  const systemPanelWatts = (totalWh / bat.efficiency / stateData.psh) * 1.25;
+  const systemPanelWatts = (dailyFromBattery / bat.efficiency / stateData.psh) * 1.25;
   const chosenPanelW = stdPanelSize(systemPanelWatts);
-  const panelCount = Math.ceil(systemPanelWatts / chosenPanelW);
+  const panelCount = Math.max(1, Math.ceil(systemPanelWatts / chosenPanelW));
 
   const inverterSize = Math.ceil((surgeWatts * 1.25) / 100) * 100;
   const chargeControllerAmps = Math.ceil((chosenPanelW * panelCount / systemVoltage) * 1.25 / 10) * 10;
@@ -102,7 +108,8 @@ export function calcResults({
 
 function stdPanelSize(systemPanelWatts) {
   const panelWattages = [100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600];
-  return panelWattages.find((p) => p >= systemPanelWatts / Math.ceil(systemPanelWatts / 400)) || 400;
+  const target = systemPanelWatts > 0 ? systemPanelWatts / Math.ceil(systemPanelWatts / 400) : 0;
+  return panelWattages.find((p) => p >= target) || 400;
 }
 
 export function buildShareText({
