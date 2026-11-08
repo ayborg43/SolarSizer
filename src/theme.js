@@ -3,7 +3,7 @@ export function hexToRgb(hex) {
 }
 
 const DARK = {
-  appBg:"linear-gradient(160deg,#080d1a 0%,#0b1520 55%,#06150e 100%)",
+  appBg:"radial-gradient(1100px 500px at 85% -5%, rgba(245,158,11,0.09), transparent 60%), radial-gradient(900px 480px at -10% 0%, rgba(16,185,129,0.06), transparent 55%), linear-gradient(165deg,#070b14 0%,#0a1322 55%,#07140d 100%)", cardShadow:"0 1px 2px rgba(0,0,0,0.35), 0 12px 32px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.05)",
   appColor:"#e2eae4",pageBg:"transparent",
   headerBg:"rgba(10,16,30,0.92)",headerBorder:"rgba(255,195,0,0.12)",headerSub:"rgba(255,255,255,0.35)",
   stepDotInactive:"rgba(255,255,255,0.05)",stepDotBorder:"rgba(255,255,255,0.09)",stepLabelOff:"rgba(255,255,255,0.22)",
@@ -28,7 +28,7 @@ const DARK = {
 };
 
 const LIGHT = {
-  appBg:"linear-gradient(160deg,#fefaf2 0%,#eef6ff 55%,#edfaf3 100%)",
+  appBg:"radial-gradient(1100px 500px at 85% -5%, rgba(245,158,11,0.10), transparent 60%), radial-gradient(900px 480px at -10% 0%, rgba(16,185,129,0.07), transparent 55%), linear-gradient(165deg,#fffdf8 0%,#f4f8fc 55%,#f2faf5 100%)", cardShadow:"0 1px 2px rgba(120,80,10,0.05), 0 12px 32px rgba(120,80,10,0.07), inset 0 1px 0 rgba(255,255,255,0.7)",
   appColor:"#111827",pageBg:"transparent",
   headerBg:"rgba(255,255,255,0.88)",headerBorder:"rgba(245,158,11,0.18)",headerSub:"#9ca3af",
   stepDotInactive:"rgba(0,0,0,0.05)",stepDotBorder:"rgba(0,0,0,0.1)",stepLabelOff:"#9ca3af",

@@ -26,9 +26,6 @@ const validState = {
     { id: "fridge", name: "Refrigerator", icon: "🧊", watts: 150, hoursPerDay: 10, qty: 2, priority: "must" },
     { id: "custom_123", name: "CCTV Camera", icon: "🔌", watts: 30, hoursPerDay: 24, qty: 1, priority: "nice" },
   ],
-  backupTarget: "generator",
-  propertyType: "duplex",
-  installerPreference: "diy",
   autonomyDays: 3,
   batteryType: "lithium",
   systemVoltage: 48,
@@ -75,9 +72,6 @@ test("parseWizardState sanitizes unknown values and clamps numbers", () => {
       { id: "does_not_exist", watts: 100, hoursPerDay: 5, qty: 1 },
       { id: "fridge", watts: 99999, hoursPerDay: 99, qty: 500, priority: "bogus" },
     ],
-    backupTarget: "bogus",
-    propertyType: "bogus",
-    installerPreference: "bogus",
     autonomyDays: 99,
     batteryType: "bogus",
     systemVoltage: 13,
@@ -91,7 +85,9 @@ test("parseWizardState sanitizes unknown values and clamps numbers", () => {
   assert.equal(parsed.appliances[0].hoursPerDay, 24);
   assert.equal(parsed.appliances[0].qty, 50);
   assert.equal(parsed.appliances[0].priority, "must");
-  assert.equal(parsed.backupTarget, "overnight");
+  assert.equal("backupTarget" in parsed, false);
+  assert.equal("propertyType" in parsed, false);
+  assert.equal("installerPreference" in parsed, false);
   assert.equal(parsed.autonomyDays, 6);
   assert.equal(parsed.backupSource, "petrol");
   assert.equal(parsed.backupPrice, 1000);

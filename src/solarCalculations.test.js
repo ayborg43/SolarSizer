@@ -6,7 +6,6 @@ import {
   applianceSurgeWatts,
   appliancePeakWatts,
   applianceWh,
-  autonomyDaysForTarget,
   buildShareText,
   calcResults,
   calcRoi,
@@ -64,12 +63,6 @@ test("getRecommendedVoltage thresholds", () => {
   assert.equal(getRecommendedVoltage(100, 3500), 48);
 });
 
-test("autonomyDaysForTarget mapping and default", () => {
-  assert.equal(autonomyDaysForTarget("daytime"), 1);
-  assert.equal(autonomyDaysForTarget("full-day"), 2);
-  assert.equal(autonomyDaysForTarget("generator"), 3);
-  assert.equal(autonomyDaysForTarget("overnight"), 1);
-});
 
 test("calcResults sizes battery bank including inverter efficiency", () => {
   const r = calcResults(baseArgs());
@@ -219,9 +212,6 @@ test("buildShareText includes key sections", () => {
     results: r,
     appliances: [{ ...fridge, priority: "must" }, { id: "tv", name: "TV", watts: 60, hoursPerDay: 4, qty: 1, priority: "nice" }],
     sunHours: 4.5,
-    backupTargetLabel: "Overnight backup",
-    propertyTypeLabel: "Flat / Apartment",
-    installerPreferenceLabel: "Compare quotes first",
     confidenceWarnings: ["warning A"],
     quoteChecklist: ["checklist A"],
     maintenanceReminders: ["reminder A"],

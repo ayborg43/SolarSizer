@@ -1,20 +1,15 @@
 import {
   APPLIANCES,
   BATTERY_TYPES,
-  INSTALLER_PREFS,
   LOAD_PROFILES,
-  PROPERTY_TYPES,
   SYSTEM_VOLTAGES,
 } from "./data.js";
 import { clampNumber } from "./solarCalculations.js";
 
 export const WIZARD_STORAGE_KEY = "solarsizer-wizard-v1";
 
-const BACKUP_TARGETS = ["daytime", "overnight", "full-day", "generator"];
-
 const FIELDS = [
-  "step", "sunHours", "appliances", "backupTarget", "propertyType",
-  "installerPreference", "autonomyDays",
+  "step", "sunHours", "appliances", "autonomyDays",
   "batteryType", "systemVoltage", "expandedBattery", "activeProfile",
   "darkMode", "showStepHelp", "voltageManuallySet",
   "backupSource", "backupPrice", "systemCost",
@@ -54,9 +49,6 @@ export function parseWizardState(text) {
     appliances: Array.isArray(raw.appliances)
       ? raw.appliances.map(sanitizeAppliance).filter(Boolean)
       : [],
-    backupTarget: BACKUP_TARGETS.includes(raw.backupTarget) ? raw.backupTarget : "overnight",
-    propertyType: PROPERTY_TYPES.some((p) => p.id === raw.propertyType) ? raw.propertyType : "flat",
-    installerPreference: INSTALLER_PREFS.some((p) => p.id === raw.installerPreference) ? raw.installerPreference : "compare",
     autonomyDays: Math.round(clampNumber(raw.autonomyDays, 1, 6, 1)),
     backupSource: ["petrol", "diesel", "grid"].includes(raw.backupSource) ? raw.backupSource : "petrol",
     backupPrice: clampNumber(raw.backupPrice, 0, 100000, 1000),

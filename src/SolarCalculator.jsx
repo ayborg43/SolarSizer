@@ -10,9 +10,7 @@ import {
 import {
   APPLIANCES,
   BATTERY_TYPES,
-  INSTALLER_PREFS,
   LOAD_PROFILES,
-  PROPERTY_TYPES,
 } from "./data";
 import { getTheme } from "./theme";
 import { makeUiStyles } from "./uiStyles";
@@ -30,6 +28,7 @@ import StepAppliances from "./steps/StepAppliances";
 import StepBackup from "./steps/StepBackup";
 import StepBattery from "./steps/StepBattery";
 import StepResults from "./steps/StepResults";
+import { SunLogo } from "./components/icons";
 
 async function copyTextToClipboard(text) {
   try {
@@ -80,9 +79,6 @@ export default function SolarCalculator() {
   const [customName, setCustomName] = useState("");
   const [customWatts, setCustomWatts] = useState("");
   const [customHours, setCustomHours] = useState("");
-  const [backupTarget, setBackupTarget] = useState(restored?.backupTarget ?? "overnight");
-  const [propertyType, setPropertyType] = useState(restored?.propertyType ?? "flat");
-  const [installerPreference, setInstallerPreference] = useState(restored?.installerPreference ?? "compare");
   const [autonomyDays, setAutonomyDays] = useState(restored?.autonomyDays ?? 1);
   const [batteryType, setBatteryType] = useState(restored?.batteryType ?? "agm");
   const [systemVoltage, setSystemVoltage] = useState(restored?.systemVoltage ?? 24);
@@ -122,12 +118,11 @@ export default function SolarCalculator() {
     const storage = browserStorage();
     if (!storage) return;
     saveWizardState(storage, {
-      step, sunHours, appliances, backupTarget, propertyType,
-      installerPreference, autonomyDays, batteryType,
+      step, sunHours, appliances, autonomyDays, batteryType,
       systemVoltage, expandedBattery, activeProfile, darkMode, showStepHelp,
       voltageManuallySet, backupSource, backupPrice, systemCost,
     });
-  }, [step, sunHours, appliances, backupTarget, propertyType, installerPreference, autonomyDays, batteryType, systemVoltage, expandedBattery, activeProfile, darkMode, showStepHelp, voltageManuallySet, backupSource, backupPrice, systemCost]);
+  }, [step, sunHours, appliances, autonomyDays, batteryType, systemVoltage, expandedBattery, activeProfile, darkMode, showStepHelp, voltageManuallySet, backupSource, backupPrice, systemCost]);
 
   const isDesktop = windowWidth >= 900;
   const totalWh = appliances.reduce((s, a) => s + applianceWh(a), 0);
@@ -182,29 +177,11 @@ export default function SolarCalculator() {
     setCustomName(""); setCustomWatts(""); setCustomHours(""); setAddingCustom(false); setActiveProfile(null);
   }
 
-  function getBackupTargetLabel(value = backupTarget) {
-    if (value === "generator") return "Generator replacement";
-    if (value === "full-day") return "Full day backup";
-    if (value === "daytime") return "Daytime essentials";
-    return "Overnight backup";
-  }
-
-  function getPropertyTypeLabel() {
-    return PROPERTY_TYPES.find((p) => p.id === propertyType)?.label || "Property";
-  }
-
-  function getInstallerPreferenceLabel() {
-    return INSTALLER_PREFS.find((p) => p.id === installerPreference)?.label || "Installer verification";
-  }
-
   function createExportText(r, reportSections) {
     return buildShareText({
       results: r,
       appliances,
       sunHours,
-      backupTargetLabel: getBackupTargetLabel(),
-      propertyTypeLabel: getPropertyTypeLabel(),
-      installerPreferenceLabel: getInstallerPreferenceLabel(),
       ...reportSections,
     });
   }
@@ -274,9 +251,6 @@ export default function SolarCalculator() {
     setCustomName("");
     setCustomWatts("");
     setCustomHours("");
-    setBackupTarget("overnight");
-    setPropertyType("flat");
-    setInstallerPreference("compare");
     setAutonomyDays(1);
     setBatteryType("agm");
     setSystemVoltage(24);
@@ -294,7 +268,7 @@ export default function SolarCalculator() {
 
   const T = getTheme(darkMode);
   const styles = makeUiStyles(T);
-  const steps = ["Goals", "Appliances", "Backup", "Battery", "Results"];
+  const steps = ["Sunlight", "Appliances", "Backup", "Battery", "Results"];
   const selBattery = BATTERY_TYPES.find((b) => b.id === batteryType);
   const selProfile = LOAD_PROFILES.find((p) => p.id === activeProfile);
 
@@ -315,9 +289,6 @@ export default function SolarCalculator() {
       step={step}
       steps={steps}
       sunHours={sunHours}
-      backupTargetLabel={getBackupTargetLabel()}
-      propertyTypeLabel={getPropertyTypeLabel()}
-      installerPreferenceLabel={getInstallerPreferenceLabel()}
       selProfile={selProfile}
       appliances={appliances}
       totalApplianceUnits={totalApplianceUnits}
@@ -334,9 +305,6 @@ export default function SolarCalculator() {
       return (
         <StepGoals
           styles={styles} T={T} isDesktop={isDesktop} helpBanner={helpBanner}
-          backupTarget={backupTarget} setBackupTarget={setBackupTarget} setAutonomyDays={setAutonomyDays}
-          propertyType={propertyType} setPropertyType={setPropertyType}
-          installerPreference={installerPreference} setInstallerPreference={setInstallerPreference}
           sunHours={sunHours} setSunHours={setSunHours}
           onContinue={() => setStep(1)}
         />
@@ -399,7 +367,6 @@ export default function SolarCalculator() {
           results={liveResults} appliances={appliances}
           sunHours={sunHours}
           autonomyDays={autonomyDays} batteryType={batteryType} systemVoltage={systemVoltage}
-          installerPreference={installerPreference}
           assistantMode={assistantMode} setAssistantMode={setAssistantMode}
           backupSource={backupSource} backupPrice={backupPrice}
           systemCost={systemCost} setSystemCost={setSystemCost}
@@ -423,7 +390,7 @@ export default function SolarCalculator() {
 
       <header style={{ background: T.headerBg, borderBottom: `1px solid ${T.headerBorder}`, backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", position: "sticky", top: 0, zIndex: 50 }}>
         <div style={{ maxWidth: "1200px", margin: "0 auto", padding: isDesktop ? "0 40px" : "0 20px", height: isDesktop ? "72px" : "58px", display: "flex", alignItems: "center", gap: "14px" }}>
-          <div style={{ fontSize: isDesktop ? "34px" : "28px", lineHeight: 1 }}>☀️</div>
+          <div style={{ width: isDesktop ? "42px" : "36px", height: isDesktop ? "42px" : "36px", borderRadius: "12px", background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 6px 16px rgba(217,119,6,0.35), inset 0 1px 0 rgba(255,255,255,0.4)" }}><SunLogo size={isDesktop ? 24 : 20} /></div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: isDesktop ? "20px" : "18px", fontWeight: "800", color: "#f59e0b", letterSpacing: "-0.4px" }}>SolarSizer</div>
             <div style={{ fontSize: "11px", color: T.headerSub, marginTop: "1px" }}>Solar Setup Calculator & Guide</div>
@@ -446,16 +413,16 @@ export default function SolarCalculator() {
 
       {isDesktop ? (
         <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 40px 48px" }}>
-          <Stepper T={T} steps={steps} step={step} isDesktop={isDesktop} />
+          <Stepper T={T} steps={steps} step={step} isDesktop={isDesktop} onStepClick={setStep} />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: "28px", alignItems: "start" }}>
-            <div>{renderStepContent()}</div>
+            <main key={step} className="step-enter">{renderStepContent()}</main>
             <div style={{ position: "sticky", top: "90px" }}>{summaryPanel}</div>
           </div>
         </div>
       ) : (
         <>
           <div style={{ padding: "0 20px" }}>
-            <Stepper T={T} steps={steps} step={step} isDesktop={isDesktop} />
+            <Stepper T={T} steps={steps} step={step} isDesktop={isDesktop} onStepClick={setStep} />
             <button
               aria-expanded={showMobileSummary}
               onClick={() => setShowMobileSummary(!showMobileSummary)}
@@ -465,9 +432,14 @@ export default function SolarCalculator() {
             </button>
             {showMobileSummary && <div style={{ marginTop: "10px" }}>{summaryPanel}</div>}
           </div>
-          <div style={{ padding: "20px 20px 40px" }}>{renderStepContent()}</div>
+          <main key={step} className="step-enter" style={{ padding: "20px 20px 40px" }}>{renderStepContent()}</main>
         </>
       )}
+      <footer style={{ borderTop: `1px solid ${T.headerBorder}`, padding: "18px 20px 26px", textAlign: "center" }}>
+        <div style={{ fontSize: "12px", color: T.label, lineHeight: "1.7" }}>
+          SolarSizer — sizing estimate only. Installer must verify on site: load test, cable sizing, roof inspection, and battery compatibility.
+        </div>
+      </footer>
     </div>
   );
 }

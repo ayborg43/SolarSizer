@@ -1,10 +1,6 @@
-import { INSTALLER_PREFS, PROPERTY_TYPES } from "../data";
-import { autonomyDaysForTarget } from "../solarCalculations";
 
 export default function StepGoals({
   styles, T, isDesktop, helpBanner,
-  backupTarget, setBackupTarget, setAutonomyDays,
-  propertyType, setPropertyType, installerPreference, setInstallerPreference,
   sunHours, setSunHours,
   onContinue,
 }) {
@@ -13,36 +9,9 @@ export default function StepGoals({
 
   return (
     <>
-      <div style={{ fontSize: isDesktop ? "26px" : "22px", fontWeight: "800", color: T.sectionTitle, marginBottom: "4px", letterSpacing: "-0.5px" }}>What should this solar setup achieve?</div>
-      <div style={{ fontSize: "14px", color: T.sectionSub, marginBottom: "24px", lineHeight: "1.6" }}>Start with your goal, then tell us how much strong sunlight your area gets. The assistant will use this context to guide reliability, sizing, and installer decisions.</div>
+      <div style={{ fontSize: isDesktop ? "26px" : "22px", fontWeight: "800", color: T.sectionTitle, marginBottom: "4px", letterSpacing: "-0.5px" }}>How much sunlight do you get?</div>
+      <div style={{ fontSize: "14px", color: T.sectionSub, marginBottom: "24px", lineHeight: "1.6" }}>Tell us how much strong sunlight your panels will get. This single number drives your panel sizing — everything else comes from your appliances.</div>
       {helpBanner}
-
-      <div style={{ ...card, marginBottom: "18px" }}>
-        <div style={{ ...labelSt, marginBottom: "12px" }}>Goal Intake</div>
-        <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "1fr 1fr" : "1fr", gap: "12px" }}>
-          <div>
-            <div style={{ fontSize: "12px", color: T.label, marginBottom: "6px" }}>Backup target</div>
-            <select aria-label="Backup target" value={backupTarget} onChange={(e) => { setBackupTarget(e.target.value); setAutonomyDays(autonomyDaysForTarget(e.target.value)); }} style={{ ...numInput, width: "100%", padding: "11px 12px", boxSizing: "border-box" }}>
-              <option value="daytime">Daytime essentials</option>
-              <option value="overnight">Overnight backup</option>
-              <option value="full-day">Full day backup</option>
-              <option value="generator">Generator replacement</option>
-            </select>
-          </div>
-          {[
-            ["Property", PROPERTY_TYPES, propertyType, setPropertyType],
-            ["Installer", INSTALLER_PREFS, installerPreference, setInstallerPreference],
-          ].map(([label, options, selected, setter]) => (
-            <div key={label}>
-              <div style={{ fontSize: "12px", color: T.label, marginBottom: "6px" }}>{label}</div>
-              <select aria-label={label} value={selected} onChange={(e) => setter(e.target.value)} style={{ ...numInput, width: "100%", padding: "11px 12px", boxSizing: "border-box" }}>
-                {options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-              </select>
-            </div>
-          ))}
-        </div>
-
-      </div>
 
       <div style={{ ...card, marginBottom: "18px" }}>
         <div style={{ ...labelSt, marginBottom: "6px" }}>Sunlight Hours</div>

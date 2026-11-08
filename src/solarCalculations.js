@@ -75,13 +75,6 @@ export function getRecommendedVoltage(totalWh, peakWatts) {
   return 12;
 }
 
-export function autonomyDaysForTarget(target) {
-  if (target === "daytime") return 1;
-  if (target === "full-day") return 2;
-  if (target === "generator") return 3;
-  return 1;
-}
-
 export const DEFAULT_SUN_HOURS = 5;
 
 export function calcResults({
@@ -173,9 +166,6 @@ export function buildShareText({
   results,
   appliances,
   sunHours,
-  backupTargetLabel,
-  propertyTypeLabel,
-  installerPreferenceLabel,
   confidenceWarnings,
   quoteChecklist,
   maintenanceReminders,
@@ -192,7 +182,6 @@ export function buildShareText({
   return [
     "SolarSizer recommendation",
     `${sunHours} peak sun hrs/day · ${results.totalWh.toLocaleString()} Wh/day · ${results.peakWatts.toLocaleString()}W running peak · ${results.surgeWatts.toLocaleString()}W surge estimate`,
-    `Goal: ${backupTargetLabel} · ${propertyTypeLabel} · ${installerPreferenceLabel}`,
     `Battery: ${results.battery.physicalBatteryCount} × ${results.battery.ah}Ah ${results.battery.baseVoltage}V batteries (${results.battery.wiringText})`,
     `Panels: ${results.panels.count} × ${results.panels.watts}W (${results.panels.totalWatts}W total) · Roof space: ~${results.panels.roofAreaSqm}sqm · Mounting: ${results.panels.mountingKits} rack kit${results.panels.mountingKits !== 1 ? "s" : ""}`,
     `Inverter: ${results.inverter}W (≈${formatInverterVA(results.inverterVA)} at 0.8 PF — shop size) · Controller: ${results.chargeControllerCount > 1 ? `${results.chargeControllerCount} × ` : ""}${results.chargeController}A MPPT`,

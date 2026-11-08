@@ -72,19 +72,6 @@ export const BATTERY_TYPES = [
 
 export const SYSTEM_VOLTAGES = [12, 24, 48];
 
-export const PROPERTY_TYPES = [
-  { id: "flat", label: "Flat / Apartment" },
-  { id: "bungalow", label: "Bungalow" },
-  { id: "duplex", label: "Duplex" },
-  { id: "shop", label: "Shop / Office" },
-];
-
-export const INSTALLER_PREFS = [
-  { id: "installer", label: "Use an installer" },
-  { id: "compare", label: "Compare quotes first" },
-  { id: "diy", label: "DIY / supervise closely" },
-];
-
 // ─── Load Profiles ─────────────────────────────────────────────────────────
 export const LOAD_PROFILES = [
   {

@@ -1,12 +1,13 @@
 import { BATTERY_TYPES } from "../data";
 import { INVERTER_EFFICIENCY, INVERTER_POWER_FACTOR, PANELS_PER_RACK_KIT, calcResults, calcRoi, formatInverterVA } from "../solarCalculations";
 import Faq from "../components/Faq";
+import { BatteryIcon, PanelIcon, BoltIcon, ControllerIcon, RackIcon, TargetIcon } from "../components/icons";
 import { hexToRgb } from "../theme";
 
 export default function StepResults({
   styles, T, isDesktop, helpBanner,
   results: r, appliances, sunHours, autonomyDays, batteryType,
-  systemVoltage, installerPreference, assistantMode, setAssistantMode,
+  systemVoltage, assistantMode, setAssistantMode,
   backupSource, backupPrice, systemCost, setSystemCost, onAdjustAutonomy,
   onBack, onEditStep, onShare, onWhatsApp, onDownload, onReset,
 }) {
@@ -28,9 +29,7 @@ export default function StepResults({
     r.battery.parallelStrings > 3 && batteryType !== "lithium" ? `${r.battery.parallelStrings} parallel battery strings exceeds the recommended maximum of 3 for lead-acid banks. Consider a higher system voltage, larger batteries, or lithium.` : null,
     batteryType === "lithium" ? "Lithium banks are commonly sold as single 24V or 48V rack units — the 12V module count shown is an equivalent-capacity guide, not a shopping list." : null,
   ].filter(Boolean);
-  const nextAction = installerPreference === "diy"
-    ? "Next best action: create a parts list and have a licensed technician verify cable sizing, breakers, grounding, and battery protection."
-    : "Next best action: request 3 installer quotes using the checklist below and compare equipment brands line by line.";
+  const nextAction = "Next best action: request 3 installer quotes using the checklist below and compare equipment brands line by line. If installing yourself, have a licensed technician verify cable sizing, breakers, grounding, and battery protection.";
   const maintenanceReminders = [
     batteryType === "flooded" ? "Flooded batteries: check water level monthly and install in a ventilated area." : null,
     batteryType !== "lithium" ? "Lead-acid batteries: avoid deep discharge and check terminals for corrosion." : "Lithium batteries: confirm the inverter/charger supports LiFePO₄ charging profiles.",
@@ -50,7 +49,7 @@ export default function StepResults({
     <>
       <button onClick={onBack} style={{ background: "transparent", border: "none", color: T.label, cursor: "pointer", fontSize: "13px", padding: 0, marginBottom: "12px", display: "flex", alignItems: "center", gap: "4px", fontFamily: "'Outfit',sans-serif" }}>← Back to Battery</button>
       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "20px" }}>
-        {[["Goals", 0], ["Appliances", 1], ["Backup", 2], ["Battery", 3]].map(([label, s]) => (
+        {[["Sunlight", 0], ["Appliances", 1], ["Backup", 2], ["Battery", 3]].map(([label, s]) => (
           <button key={label} onClick={() => onEditStep(s)} style={{ padding: "7px 14px", borderRadius: "20px", border: `1px solid ${T.cardBorder}`, background: T.card, color: T.btnClr, cursor: "pointer", fontSize: "12px", fontWeight: "600", fontFamily: "'Outfit',sans-serif" }}>
             Edit {label}
           </button>
@@ -88,15 +87,15 @@ export default function StepResults({
       <div style={{ ...labelSt, marginBottom: "12px" }}>Recommended System — Bill of Materials</div>
       <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(2,1fr)" : "repeat(1,1fr)", gap: "12px", marginBottom: "24px" }}>
         {[
-          { color: "#fbbf24", icon: "🔋", label: "1. Battery Bank", value: `${r.battery.physicalBatteryCount} × ${r.battery.ah}Ah`, sub: `${r.battery.baseVoltage}V batteries · ${r.battery.seriesCount}S × ${r.battery.parallelStrings}P` },
-          { color: "#10b981", icon: "☀️", label: "2. Solar Panels", value: `${r.panels.count} × ${r.panels.watts}W`, sub: `${r.panels.totalWatts}W array · ~${r.panels.roofAreaSqm}sqm roof space` },
-          { color: "#3b82f6", icon: "⚡", label: "3. Inverter Size", value: `${r.inverter}W`, sub: `${r.peakWatts}W running · ${r.surgeWatts}W surge · ≈${formatInverterVA(r.inverterVA)} shop size` },
-          { color: "#8b5cf6", icon: "🔌", label: "4. Charge Controller", value: r.chargeControllerCount > 1 ? `${r.chargeControllerCount} × ${r.chargeController}A` : `${r.chargeController}A`, sub: r.chargeControllerCount > 1 ? "MPPT controllers in parallel" : "MPPT recommended" },
-          { color: "#f97316", icon: "🔩", label: "5. Mounting Rack", value: `${r.panels.mountingKits} rack kit${r.panels.mountingKits !== 1 ? "s" : ""}`, sub: `Mounting for ${r.panels.count} panels (1 kit per ${PANELS_PER_RACK_KIT})` },
-          { color: "#14b8a6", icon: "🎯", label: "Load Priority", value: `${mustRunLoads.length} must-run`, sub: `${niceLoads.length} nice-to-have load${niceLoads.length !== 1 ? "s" : ""}` },
+          { color: "#d97706", icon: <BatteryIcon />, label: "1. Battery Bank", value: `${r.battery.physicalBatteryCount} × ${r.battery.ah}Ah`, sub: `${r.battery.baseVoltage}V batteries · ${r.battery.seriesCount}S × ${r.battery.parallelStrings}P` },
+          { color: "#059669", icon: <PanelIcon />, label: "2. Solar Panels", value: `${r.panels.count} × ${r.panels.watts}W`, sub: `${r.panels.totalWatts}W array · ~${r.panels.roofAreaSqm}sqm roof space` },
+          { color: "#d97706", icon: <BoltIcon />, label: "3. Inverter Size", value: `${r.inverter}W`, sub: `${r.peakWatts}W running · ${r.surgeWatts}W surge · ≈${formatInverterVA(r.inverterVA)} shop size` },
+          { color: "#0f766e", icon: <ControllerIcon />, label: "4. Charge Controller", value: r.chargeControllerCount > 1 ? `${r.chargeControllerCount} × ${r.chargeController}A` : `${r.chargeController}A`, sub: r.chargeControllerCount > 1 ? "MPPT controllers in parallel" : "MPPT recommended" },
+          { color: "#57534e", icon: <RackIcon />, label: "5. Mounting Rack", value: `${r.panels.mountingKits} rack kit${r.panels.mountingKits !== 1 ? "s" : ""}`, sub: `Mounting for ${r.panels.count} panels (1 kit per ${PANELS_PER_RACK_KIT})` },
+          { color: "#059669", icon: <TargetIcon />, label: "Load Priority", value: `${mustRunLoads.length} must-run`, sub: `${niceLoads.length} nice-to-have load${niceLoads.length !== 1 ? "s" : ""}` },
         ].map((c) => (
-          <div key={c.label} style={{ background: `rgba(${hexToRgb(c.color)},0.07)`, border: `1px solid rgba(${hexToRgb(c.color)},0.2)`, borderRadius: "18px", padding: isDesktop ? "20px" : "16px" }}>
-            <div style={{ fontSize: "28px", marginBottom: "10px" }}>{c.icon}</div>
+          <div key={c.label} style={{ background: `rgba(${hexToRgb(c.color)},0.05)`, border: `1px solid rgba(${hexToRgb(c.color)},0.18)`, borderRadius: "20px", padding: isDesktop ? "20px" : "16px", boxShadow: T.cardShadow }}>
+            <div style={{ width: "42px", height: "42px", borderRadius: "12px", background: `rgba(${hexToRgb(c.color)},0.10)`, border: `1px solid rgba(${hexToRgb(c.color)},0.22)`, color: c.color, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "12px" }}>{c.icon}</div>
             <div style={{ fontSize: "11px", color: T.resultLbl, marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.8px" }}>{c.label}</div>
             <div style={{ fontSize: isDesktop ? "24px" : "20px", fontWeight: "800", color: c.color }}>{c.value}</div>
             <div style={{ fontSize: "12px", color: T.resultLbl, marginTop: "4px" }}>{c.sub}</div>

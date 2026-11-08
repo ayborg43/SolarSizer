@@ -1,7 +1,55 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Outfit', sans-serif; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Outfit', sans-serif; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
 button { font-family: inherit; }
-input { font-family: inherit; }
+input, select { font-family: inherit; }
+::selection { background: rgba(245, 158, 11, 0.28); }
+
+/* Tabular figures for all data values */
+.num, input[type="number"] { font-variant-numeric: tabular-nums; }
+
+/* Interactive states (inline styles cannot express these) */
+button {
+  transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1), filter 0.25s cubic-bezier(0.32, 0.72, 0, 1), background-color 0.25s, border-color 0.25s, box-shadow 0.25s;
+}
+button:not(:disabled):hover { filter: brightness(1.05); }
+button:not(:disabled):active { transform: scale(0.98); }
+button:disabled { cursor: not-allowed; }
+
+:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: rgba(245, 158, 11, 0.65) !important;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.16);
+  outline: none;
+}
+input[type="range"] { cursor: pointer; }
+
+/* Step entry: gentle fade-up, transform/opacity only */
+@keyframes step-enter {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.step-enter { animation: step-enter 0.55s cubic-bezier(0.32, 0.72, 0, 1) both; }
+
+@keyframes toast-enter {
+  from { opacity: 0; transform: translate(-50%, 10px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* Slim, theme-neutral scrollbars */
+* { scrollbar-width: thin; scrollbar-color: rgba(180, 140, 60, 0.45) transparent; }
+*::-webkit-scrollbar { width: 6px; height: 6px; }
+*::-webkit-scrollbar-thumb { background: rgba(180, 140, 60, 0.45); border-radius: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .step-enter { animation: none; }
+  button { transition: none; }
+}
 
 @media print {
   @page {
@@ -19,6 +67,7 @@ input { font-family: inherit; }
   }
 
   header,
+  footer,
   button {
     display: none !important;
   }
