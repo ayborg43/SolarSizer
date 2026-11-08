@@ -21,8 +21,7 @@ function fakeStorage() {
 
 const validState = {
   step: 2,
-  country: "GH",
-  location: "Northern",
+  sunHours: 5.8,
   appliances: [
     { id: "fridge", name: "Refrigerator", icon: "🧊", watts: 150, hoursPerDay: 10, qty: 2, priority: "must" },
     { id: "custom_123", name: "CCTV Camera", icon: "🔌", watts: 30, hoursPerDay: 24, qty: 1, priority: "nice" },
@@ -51,8 +50,7 @@ test("wizard state round-trips through storage", () => {
   assert.ok(storage.map.has(WIZARD_STORAGE_KEY));
   assert.deepEqual(loadWizardState(storage), parseWizardState(serializeWizardState(validState)));
   const loaded = loadWizardState(storage);
-  assert.equal(loaded.country, "GH");
-  assert.equal(loaded.location, "Northern");
+  assert.equal(loaded.sunHours, 5.8);
   assert.equal(loaded.appliances.length, 2);
   assert.equal(loaded.appliances[1].name, "CCTV Camera");
   assert.equal(loaded.backupSource, "diesel");
@@ -72,8 +70,7 @@ test("parseWizardState returns null for corrupt or non-object input", () => {
 test("parseWizardState sanitizes unknown values and clamps numbers", () => {
   const parsed = parseWizardState(JSON.stringify({
     step: 99,
-    country: "XX",
-    location: "Nowhere",
+    sunHours: 99,
     appliances: [
       { id: "does_not_exist", watts: 100, hoursPerDay: 5, qty: 1 },
       { id: "fridge", watts: 99999, hoursPerDay: 99, qty: 500, priority: "bogus" },
@@ -87,8 +84,8 @@ test("parseWizardState sanitizes unknown values and clamps numbers", () => {
     darkMode: "yes",
   }));
   assert.equal(parsed.step, 4);
-  assert.equal(parsed.country, "NG");
-  assert.equal(parsed.location, "Lagos");
+  assert.equal(parsed.sunHours, 10);
+  assert.equal("country" in parsed, false);
   assert.equal(parsed.appliances.length, 1);
   assert.equal(parsed.appliances[0].watts, 10000);
   assert.equal(parsed.appliances[0].hoursPerDay, 24);

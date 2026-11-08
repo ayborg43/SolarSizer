@@ -20,22 +20,16 @@ const batteryTypes = [
   { id: "lithium", name: "Lithium Iron Phosphate", dod: 0.9, efficiency: 0.97 },
 ];
 
-const countries = [
-  { code: "NG", name: "Nigeria", states: [{ name: "Lagos", psh: 4.5, zone: "South West" }] },
-];
-
 const fridge = { id: "fridge", name: "Refrigerator", watts: 150, hoursPerDay: 10, qty: 1 };
 
 function baseArgs(overrides = {}) {
   return {
     appliances: [fridge],
-    country: "NG",
-    location: "Lagos",
+    sunHours: 4.5,
     autonomyDays: 1,
     batteryType: "agm",
     systemVoltage: 24,
     batteryTypes,
-    countries,
     ...overrides,
   };
 }
@@ -153,10 +147,12 @@ test("calcResults handles empty appliance list without NaN", () => {
   assert.ok(Number.isFinite(r.panels.totalWatts));
 });
 
-test("calcResults falls back to first country/state when unknown", () => {
-  const r = calcResults(baseArgs({ country: "XX", location: "Nowhere" }));
-  assert.equal(r.psh, 4.5);
-  assert.equal(r.zone, "South West");
+test("calcResults uses entered sun hours and falls back to 5 when invalid", () => {
+  assert.equal(calcResults(baseArgs({ sunHours: 6 })).psh, 6);
+  assert.equal(calcResults(baseArgs({ sunHours: "bad" })).psh, 5);
+  assert.equal(calcResults(baseArgs({ sunHours: 99 })).psh, 10);
+  // Fewer sun hours must mean a larger panel array
+  assert.ok(calcResults(baseArgs({ sunHours: 3 })).panels.totalWatts > calcResults(baseArgs({ sunHours: 6 })).panels.totalWatts);
 });
 
 test("calcResults snaps inverter to a standard VA market size at 0.8 power factor", () => {
@@ -214,8 +210,7 @@ test("buildShareText includes key sections", () => {
   const text = buildShareText({
     results: r,
     appliances: [{ ...fridge, priority: "must" }, { id: "tv", name: "TV", watts: 60, hoursPerDay: 4, qty: 1, priority: "nice" }],
-    location: "Lagos",
-    countryName: "Nigeria",
+    sunHours: 4.5,
     backupTargetLabel: "Overnight backup",
     propertyTypeLabel: "Flat / Apartment",
     installerPreferenceLabel: "Compare quotes first",
@@ -224,7 +219,7 @@ test("buildShareText includes key sections", () => {
     maintenanceReminders: ["reminder A"],
   });
   assert.match(text, /SolarSizer recommendation/);
-  assert.match(text, /Lagos, Nigeria/);
+  assert.match(text, /4\.5 peak sun hrs\/day/);
   assert.match(text, /Must-run loads: 1x Refrigerator/);
   assert.match(text, /Nice-to-have loads: 1x TV/);
   assert.match(text, /- warning A/);

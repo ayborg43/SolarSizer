@@ -4,7 +4,7 @@ SolarSizer is a React/Vite solar setup estimator for home and small-business loa
 
 ## What It Does
 
-- Captures goal, property type, location, and installer preference.
+- Captures goal, property type, daily sunlight (peak sun) hours, and installer preference.
 - Lets users choose load profiles or build a custom appliance list.
 - Supports appliance quantity, daily runtime, must-run loads, and nice-to-have loads.
 - Models surge demand for appliances such as fridges, freezers, AC units, pumps, washing machines, microwaves, and irons.
@@ -25,9 +25,9 @@ SolarSizer is a React/Vite solar setup estimator for home and small-business loa
 - Inverter efficiency of 90% (`INVERTER_EFFICIENCY`) is applied to battery and panel sizing.
 - Battery capacity adjusts for selected battery depth of discharge.
 - Battery layout assumes common 12V physical batteries and derives series and parallel strings from selected system voltage. Lithium banks are commonly sold as single 24V/48V units in practice; the module count is an equivalent-capacity guide.
-- Panel sizing uses local peak sun hours, selected battery efficiency, and a 25% safety factor.
+- Panel sizing uses the user's entered peak sun hours, selected battery efficiency, and a 25% safety factor.
 - Roof space uses an approximate 2.2 square meters per panel.
-- Peak sun hour values are approximate long-term averages (NASA POWER / Global Solar Atlas).
+- Peak sun hours are entered by the user (typical range 4–6 hrs/day in West Africa; lower in cloudy/rainy conditions).
 
 ## Limitations
 
@@ -61,7 +61,7 @@ npm.cmd run build
 - `src/uiStyles.js` - Theme-derived shared micro-styles.
 - `src/solarCalculations.js` - Pure calculation and export-summary helpers.
 - `src/solarCalculations.test.js` - Unit tests for sizing, voltage recommendation, and export summary (`node --test`).
-- `src/data.js` - Appliance catalogue, country/state PSH data, battery types, load profiles.
+- `src/data.js` - Appliance catalogue, battery types, load profiles.
 - `src/theme.js` - Light/dark theme tokens.
 - `src/ErrorBoundary.jsx` - Top-level error fallback.
 - `src/index.css` - Global and print styles.

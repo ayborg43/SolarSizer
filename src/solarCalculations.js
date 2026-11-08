@@ -82,22 +82,21 @@ export function autonomyDaysForTarget(target) {
   return 1;
 }
 
+export const DEFAULT_SUN_HOURS = 5;
+
 export function calcResults({
   appliances,
-  country,
-  location,
+  sunHours,
   autonomyDays,
   batteryType,
   systemVoltage,
   batteryTypes,
-  countries,
 }) {
   const totalWh = appliances.reduce((s, a) => s + applianceWh(a), 0);
   const peakWatts = appliances.reduce((s, a) => s + appliancePeakWatts(a), 0);
   const surgeWatts = Math.max(peakWatts, appliances.reduce((s, a) => s + applianceSurgeWatts(a), 0));
   const bat = batteryTypes.find((b) => b.id === batteryType) || batteryTypes[0];
-  const countryData = countries.find((c) => c.code === country) || countries[0];
-  const stateData = countryData.states.find((s) => s.name === location) || countryData.states[0];
+  const psh = clampNumber(sunHours, 1, 10, DEFAULT_SUN_HOURS);
 
   // Energy that must be drawn from the battery, accounting for inverter losses.
   const dailyFromBattery = totalWh / INVERTER_EFFICIENCY;
@@ -111,7 +110,7 @@ export function calcResults({
   const seriesCount = Math.max(1, Math.ceil(systemVoltage / baseBatteryVoltage));
   const physicalBatteryCount = parallelStrings * seriesCount;
 
-  const systemPanelWatts = (dailyFromBattery / bat.efficiency / stateData.psh) * 1.25;
+  const systemPanelWatts = (dailyFromBattery / bat.efficiency / psh) * 1.25;
   const chosenPanelW = stdPanelSize(systemPanelWatts);
   const panelCount = Math.max(1, Math.ceil(systemPanelWatts / chosenPanelW));
 
@@ -146,8 +145,7 @@ export function calcResults({
     chargeController: chargeControllerAmps,
     chargeControllerCount,
     chargeControllerTotalAmps,
-    psh: stateData.psh,
-    zone: stateData.zone,
+    psh,
     systemVoltage,
     bat,
   };
@@ -162,8 +160,7 @@ function stdPanelSize(systemPanelWatts) {
 export function buildShareText({
   results,
   appliances,
-  location,
-  countryName,
+  sunHours,
   backupTargetLabel,
   propertyTypeLabel,
   installerPreferenceLabel,
@@ -182,7 +179,7 @@ export function buildShareText({
 
   return [
     "SolarSizer recommendation",
-    `${location}, ${countryName} · ${results.totalWh.toLocaleString()} Wh/day · ${results.peakWatts.toLocaleString()}W running peak · ${results.surgeWatts.toLocaleString()}W surge estimate`,
+    `${sunHours} peak sun hrs/day · ${results.totalWh.toLocaleString()} Wh/day · ${results.peakWatts.toLocaleString()}W running peak · ${results.surgeWatts.toLocaleString()}W surge estimate`,
     `Goal: ${backupTargetLabel} · ${propertyTypeLabel} · ${installerPreferenceLabel}`,
     `Battery: ${results.battery.physicalBatteryCount} × ${results.battery.ah}Ah ${results.battery.baseVoltage}V batteries (${results.battery.wiringText})`,
     `Panels: ${results.panels.count} × ${results.panels.watts}W (${results.panels.totalWatts}W total) · Roof space: ~${results.panels.roofAreaSqm}sqm · Mounting: ${results.panels.mountingKits} rack kit${results.panels.mountingKits !== 1 ? "s" : ""}`,

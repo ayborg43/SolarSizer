@@ -3,7 +3,7 @@ import { useState } from "react";
 const FAQS = [
   {
     q: "How is my solar power requirement calculated?",
-    a: "Each appliance's watts × hours per day × quantity gives daily watt-hours. SolarSizer sums these, adds inverter and battery losses, divides by your location's peak sun hours, and applies a 25% safety factor for panels. Battery size also accounts for backup days and depth of discharge.",
+    a: "Each appliance's watts × hours per day × quantity gives daily watt-hours. SolarSizer sums these, adds inverter and battery losses, divides by your entered peak sun hours, and applies a 25% safety factor for panels. Battery size also accounts for backup days and depth of discharge.",
   },
   {
     q: "What size inverter do I need for my home?",

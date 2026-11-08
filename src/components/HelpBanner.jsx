@@ -1,7 +1,7 @@
 function getStepHelp(step) {
   switch (step) {
     case 0:
-      return "Set your goal, property type, and location first. This helps the assistant recommend a practical setup instead of only calculating raw equipment sizes.";
+      return "Set your goal, property type, and sunlight hours first. This helps the assistant recommend a practical setup instead of only calculating raw equipment sizes.";
     case 1:
       return "Start with a profile or add the appliances you actually use. The more accurate your daily hours, the closer your system recommendation will be.";
     case 2:

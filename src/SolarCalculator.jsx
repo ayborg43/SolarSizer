@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
   appliancePeakWatts,
   applianceWh,
@@ -10,7 +10,6 @@ import {
 import {
   APPLIANCES,
   BATTERY_TYPES,
-  COUNTRIES,
   INSTALLER_PREFS,
   LOAD_PROFILES,
   PROPERTY_TYPES,
@@ -55,21 +54,14 @@ async function copyTextToClipboard(text) {
   }
 }
 
-function zoneFor(countryCode, locationName) {
-  const cd = COUNTRIES.find((c) => c.code === countryCode) || COUNTRIES[0];
-  return cd.states.find((s) => s.name === locationName)?.zone || cd.states[0].zone;
-}
-
 function calcArgsFor(state) {
   return {
     appliances: state.appliances,
-    country: state.country,
-    location: state.location,
+    sunHours: state.sunHours,
     autonomyDays: state.autonomyDays,
     batteryType: state.batteryType,
     systemVoltage: state.systemVoltage,
     batteryTypes: BATTERY_TYPES,
-    countries: COUNTRIES,
   };
 }
 
@@ -83,8 +75,7 @@ export default function SolarCalculator() {
     : false;
 
   const [step, setStep] = useState(() => (restored?.step === 4 && !restoredHasLoad ? 3 : restored?.step ?? 0));
-  const [country, setCountry] = useState(restored?.country ?? "NG");
-  const [location, setLocation] = useState(restored?.location ?? "Lagos");
+  const [sunHours, setSunHours] = useState(restored?.sunHours ?? 5);
   const [appliances, setAppliances] = useState(restored?.appliances ?? []);
   const [customName, setCustomName] = useState("");
   const [customWatts, setCustomWatts] = useState("");
@@ -100,9 +91,6 @@ export default function SolarCalculator() {
   const [expandedBattery, setExpandedBattery] = useState(restored?.expandedBattery ?? "agm");
   // Results are derived live from the current inputs, so the sidebar estimate
   // and the Results step always recalculate as the user edits — no stale snapshot.
-  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
-  const [countrySearch, setCountrySearch] = useState("");
-  const [activeZone, setActiveZone] = useState(() => zoneFor(restored?.country ?? "NG", restored?.location ?? "Lagos"));
   const [addingCustom, setAddingCustom] = useState(false);
   const [activeProfile, setActiveProfile] = useState(restored?.activeProfile ?? null);
   const [darkMode, setDarkMode] = useState(restored?.darkMode ?? false);
@@ -117,7 +105,6 @@ export default function SolarCalculator() {
   const [backupPrice, setBackupPrice] = useState(restored?.backupPrice ?? 1000);
   const [systemCost, setSystemCost] = useState(restored?.systemCost ?? 0);
   const [showMobileSummary, setShowMobileSummary] = useState(false);
-  const countryDropdownRef = useRef(null);
 
   useEffect(() => {
     const h = () => setWindowWidth(window.innerWidth);
@@ -131,34 +118,23 @@ export default function SolarCalculator() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  useEffect(() => {
-    if (!countryDropdownOpen) return undefined;
-    const onPointerDown = (e) => {
-      if (countryDropdownRef.current && !countryDropdownRef.current.contains(e.target)) {
-        setCountryDropdownOpen(false);
-        setCountrySearch("");
-      }
-    };
-    document.addEventListener("mousedown", onPointerDown);
-    return () => document.removeEventListener("mousedown", onPointerDown);
-  }, [countryDropdownOpen]);
 
   // Persist wizard state so a reload resumes where the user left off.
   useEffect(() => {
     const storage = browserStorage();
     if (!storage) return;
     saveWizardState(storage, {
-      step, country, location, appliances, backupTarget, propertyType,
+      step, sunHours, appliances, backupTarget, propertyType,
       installerPreference, fridgeOvernight, acDaily, autonomyDays, batteryType,
       systemVoltage, expandedBattery, activeProfile, darkMode, showStepHelp,
       voltageManuallySet, backupSource, backupPrice, systemCost,
     });
-  }, [step, country, location, appliances, backupTarget, propertyType, installerPreference, fridgeOvernight, acDaily, autonomyDays, batteryType, systemVoltage, expandedBattery, activeProfile, darkMode, showStepHelp, voltageManuallySet, backupSource, backupPrice, systemCost]);
+  }, [step, sunHours, appliances, backupTarget, propertyType, installerPreference, fridgeOvernight, acDaily, autonomyDays, batteryType, systemVoltage, expandedBattery, activeProfile, darkMode, showStepHelp, voltageManuallySet, backupSource, backupPrice, systemCost]);
 
   const isDesktop = windowWidth >= 900;
   const totalWh = appliances.reduce((s, a) => s + applianceWh(a), 0);
   const liveResults = totalWh > 0
-    ? calcResults(calcArgsFor({ appliances, country, location, autonomyDays, batteryType, systemVoltage }))
+    ? calcResults(calcArgsFor({ appliances, sunHours, autonomyDays, batteryType, systemVoltage }))
     : null;
   const totalApplianceUnits = appliances.reduce((s, a) => s + (a.qty || 1), 0);
 
@@ -227,8 +203,7 @@ export default function SolarCalculator() {
     return buildShareText({
       results: r,
       appliances,
-      location,
-      countryName: cd?.name || "Selected country",
+      sunHours,
       backupTargetLabel: getBackupTargetLabel(),
       propertyTypeLabel: getPropertyTypeLabel(),
       installerPreferenceLabel: getInstallerPreferenceLabel(),
@@ -275,7 +250,7 @@ export default function SolarCalculator() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `solarsizer-${location.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "recommendation"}.txt`;
+    a.download = "solarsizer-recommendation.txt";
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -283,18 +258,6 @@ export default function SolarCalculator() {
     setToast("✅ Summary downloaded");
   }
 
-  function handleCountryChange(code) {
-    const cdNext = COUNTRIES.find((c) => c.code === code);
-    setCountry(code); setLocation(cdNext.defaultState);
-    setActiveZone(cdNext.states.find((s) => s.name === cdNext.defaultState)?.zone || cdNext.states[0].zone);
-    setCountryDropdownOpen(false); setCountrySearch("");
-  }
-
-  function handleStateChange(name) {
-    const cdNext = COUNTRIES.find((c) => c.code === country);
-    setLocation(name);
-    setActiveZone(cdNext.states.find((s) => s.name === name)?.zone || activeZone);
-  }
 
   function compute() {
     if (totalWh <= 0) {
@@ -308,9 +271,7 @@ export default function SolarCalculator() {
     const storage = browserStorage();
     if (storage) clearWizardState(storage);
     setStep(0);
-    setCountry("NG");
-    setLocation("Lagos");
-    setActiveZone("South West");
+    setSunHours(5);
     setAppliances([]);
     setCustomName("");
     setCustomWatts("");
@@ -324,8 +285,6 @@ export default function SolarCalculator() {
     setBatteryType("agm");
     setSystemVoltage(24);
     setExpandedBattery("agm");
-    setCountryDropdownOpen(false);
-    setCountrySearch("");
     setAddingCustom(false);
     setActiveProfile(null);
     setAssistantMode("why");
@@ -340,8 +299,6 @@ export default function SolarCalculator() {
   const T = getTheme(darkMode);
   const styles = makeUiStyles(T);
   const steps = ["Goals", "Appliances", "Backup", "Battery", "Results"];
-  const cd = COUNTRIES.find((c) => c.code === country);
-  const stateInfo = cd?.states.find((s) => s.name === location);
   const selBattery = BATTERY_TYPES.find((b) => b.id === batteryType);
   const selProfile = LOAD_PROFILES.find((p) => p.id === activeProfile);
 
@@ -361,9 +318,7 @@ export default function SolarCalculator() {
       darkMode={darkMode}
       step={step}
       steps={steps}
-      cd={cd}
-      stateInfo={stateInfo}
-      location={location}
+      sunHours={sunHours}
       backupTargetLabel={getBackupTargetLabel()}
       propertyTypeLabel={getPropertyTypeLabel()}
       installerPreferenceLabel={getInstallerPreferenceLabel()}
@@ -388,12 +343,7 @@ export default function SolarCalculator() {
           installerPreference={installerPreference} setInstallerPreference={setInstallerPreference}
           fridgeOvernight={fridgeOvernight} setFridgeOvernight={setFridgeOvernight}
           acDaily={acDaily} setAcDaily={setAcDaily}
-          cd={cd} country={country} location={location}
-          activeZone={activeZone} setActiveZone={setActiveZone}
-          countryDropdownOpen={countryDropdownOpen} setCountryDropdownOpen={setCountryDropdownOpen}
-          countrySearch={countrySearch} setCountrySearch={setCountrySearch}
-          countryDropdownRef={countryDropdownRef}
-          onCountryChange={handleCountryChange} onStateChange={handleStateChange}
+          sunHours={sunHours} setSunHours={setSunHours}
           onContinue={() => setStep(1)}
         />
       );
@@ -454,7 +404,7 @@ export default function SolarCalculator() {
         <StepResults
           styles={styles} T={T} isDesktop={isDesktop} helpBanner={helpBanner}
           results={liveResults} appliances={appliances}
-          country={country} location={location} cd={cd}
+          sunHours={sunHours}
           autonomyDays={autonomyDays} batteryType={batteryType} systemVoltage={systemVoltage}
           acDaily={acDaily} installerPreference={installerPreference}
           assistantMode={assistantMode} setAssistantMode={setAssistantMode}

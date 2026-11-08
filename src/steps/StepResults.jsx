@@ -1,11 +1,11 @@
-import { BATTERY_TYPES, COUNTRIES } from "../data";
+import { BATTERY_TYPES } from "../data";
 import { INVERTER_EFFICIENCY, INVERTER_POWER_FACTOR, PANELS_PER_RACK_KIT, calcResults, calcRoi, formatInverterVA } from "../solarCalculations";
 import Faq from "../components/Faq";
 import { hexToRgb } from "../theme";
 
 export default function StepResults({
   styles, T, isDesktop, helpBanner,
-  results: r, appliances, country, location, cd, autonomyDays, batteryType,
+  results: r, appliances, sunHours, autonomyDays, batteryType,
   systemVoltage, acDaily, installerPreference, assistantMode, setAssistantMode,
   backupSource, backupPrice, systemCost, setSystemCost, onAdjustAutonomy,
   onBack, onEditStep, onShare, onWhatsApp, onDownload, onReset,
@@ -14,7 +14,7 @@ export default function StepResults({
   const roi = calcRoi({ totalWh: r.totalWh, backupSource, backupPrice, systemCost });
   const sourceLabel = backupSource === "grid" ? "Grid electricity" : backupSource === "diesel" ? "Diesel Generator" : "Petrol Generator";
   const naira = (n) => `₦${Math.round(n).toLocaleString()}`;
-  const calcArgs = { appliances, country, location, autonomyDays, batteryType, systemVoltage, batteryTypes: BATTERY_TYPES, countries: COUNTRIES };
+  const calcArgs = { appliances, sunHours, autonomyDays, batteryType, systemVoltage, batteryTypes: BATTERY_TYPES };
   const altAutonomy = autonomyDays < 4 ? calcResults({ ...calcArgs, autonomyDays: autonomyDays + 1 }) : null;
   const altVoltage = systemVoltage < 48 ? calcResults({ ...calcArgs, systemVoltage: systemVoltage === 12 ? 24 : 48 }) : null;
   const altLithium = batteryType !== "lithium" ? calcResults({ ...calcArgs, batteryType: "lithium" }) : null;
@@ -59,8 +59,7 @@ export default function StepResults({
       <div style={{ fontSize: isDesktop ? "26px" : "22px", fontWeight: "800", color: T.sectionTitle, marginBottom: "4px", letterSpacing: "-0.5px" }}>Your Solar Setup</div>
       {helpBanner}
       <div style={{ fontSize: "14px", color: T.sectionSub, marginBottom: "24px", lineHeight: "1.6" }}>
-        Based on {r.totalWh.toLocaleString()} Wh/day in {location}, {cd?.name} {cd?.flag}
-        {r.zone && <span style={{ color: T.label }}> · {r.zone}</span>}.
+        Based on {r.totalWh.toLocaleString()} Wh/day at {r.psh} peak sun hours/day.
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(3,1fr)" : "1fr", gap: "12px", marginBottom: "20px" }}>

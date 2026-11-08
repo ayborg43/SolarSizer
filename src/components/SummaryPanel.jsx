@@ -3,7 +3,7 @@ import { hexToRgb } from "../theme";
 import { formatInverterVA } from "../solarCalculations";
 
 export default function SummaryPanel({
-  T, darkMode, step, steps, cd, stateInfo, location,
+  T, darkMode, step, steps, sunHours,
   backupTargetLabel, propertyTypeLabel, installerPreferenceLabel,
   selProfile, appliances, totalApplianceUnits, totalWh,
   systemVoltage, autonomyDays, selBattery, results,
@@ -17,10 +17,10 @@ export default function SummaryPanel({
 
       <SummaryRow
         T={T}
-        icon={cd?.flag || "📍"}
-        label="Location"
-        value={`${location}, ${cd?.name}`}
-        sub={stateInfo ? `☀️ ${stateInfo.psh} peak sun hrs/day · ${stateInfo.zone}` : undefined}
+        icon="☀️"
+        label="Sunlight"
+        value={`${sunHours} hrs/day`}
+        sub="Peak sun hours (your estimate)"
       />
 
       <SummaryRow

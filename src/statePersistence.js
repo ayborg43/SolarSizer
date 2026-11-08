@@ -1,7 +1,6 @@
 import {
   APPLIANCES,
   BATTERY_TYPES,
-  COUNTRIES,
   INSTALLER_PREFS,
   LOAD_PROFILES,
   PROPERTY_TYPES,
@@ -14,7 +13,7 @@ export const WIZARD_STORAGE_KEY = "solarsizer-wizard-v1";
 const BACKUP_TARGETS = ["daytime", "overnight", "full-day", "generator"];
 
 const FIELDS = [
-  "step", "country", "location", "appliances", "backupTarget", "propertyType",
+  "step", "sunHours", "appliances", "backupTarget", "propertyType",
   "installerPreference", "fridgeOvernight", "acDaily", "autonomyDays",
   "batteryType", "systemVoltage", "expandedBattery", "activeProfile",
   "darkMode", "showStepHelp", "voltageManuallySet",
@@ -47,16 +46,11 @@ export function parseWizardState(text) {
   try { raw = JSON.parse(text); } catch { return null; }
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
 
-  const countryData = COUNTRIES.find((c) => c.code === raw.country) || COUNTRIES[0];
-  const location = countryData.states.some((s) => s.name === raw.location)
-    ? raw.location
-    : countryData.defaultState;
   const batteryIds = BATTERY_TYPES.map((b) => b.id);
 
   return {
     step: Math.round(clampNumber(raw.step, 0, 4, 0)),
-    country: countryData.code,
-    location,
+    sunHours: clampNumber(raw.sunHours, 1, 10, 5),
     appliances: Array.isArray(raw.appliances)
       ? raw.appliances.map(sanitizeAppliance).filter(Boolean)
       : [],
