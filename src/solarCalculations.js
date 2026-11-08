@@ -103,9 +103,21 @@ export function calcResults({
   const usableWh = (dailyFromBattery * autonomyDays) / bat.dod;
   const requiredBankAh = usableWh / systemVoltage;
   const stdSizes = [100, 150, 200, 250];
-  const targetAhPerString = requiredBankAh > 0 ? requiredBankAh / Math.ceil(requiredBankAh / 200) : 0;
-  const chosenBatteryAh = stdSizes.find((s) => s >= targetAhPerString) || 200;
-  const parallelStrings = Math.max(1, Math.ceil(requiredBankAh / chosenBatteryAh));
+  // Smallest standard combination that still covers the requirement, so the
+  // bank is never undersized but also not wastefully oversized.
+  let chosenBatteryAh = 200;
+  let parallelStrings = Math.max(1, Math.ceil(requiredBankAh / chosenBatteryAh));
+  let bestTotal = Infinity;
+  for (const size of stdSizes) {
+    for (let p = 1; p <= 12; p++) {
+      const total = size * p;
+      if (total >= requiredBankAh && (total < bestTotal || (total === bestTotal && p < parallelStrings))) {
+        bestTotal = total;
+        chosenBatteryAh = size;
+        parallelStrings = p;
+      }
+    }
+  }
   const baseBatteryVoltage = 12;
   const seriesCount = Math.max(1, Math.ceil(systemVoltage / baseBatteryVoltage));
   const physicalBatteryCount = parallelStrings * seriesCount;

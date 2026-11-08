@@ -29,8 +29,6 @@ const validState = {
   backupTarget: "generator",
   propertyType: "duplex",
   installerPreference: "diy",
-  fridgeOvernight: true,
-  acDaily: false,
   autonomyDays: 3,
   batteryType: "lithium",
   systemVoltage: 48,
@@ -56,6 +54,8 @@ test("wizard state round-trips through storage", () => {
   assert.equal(loaded.backupSource, "diesel");
   assert.equal(loaded.backupPrice, 1200);
   assert.equal(loaded.systemCost, 2500000);
+  assert.equal("fridgeOvernight" in loaded, false);
+  assert.equal("acDaily" in loaded, false);
   clearWizardState(storage);
   assert.equal(loadWizardState(storage), null);
 });

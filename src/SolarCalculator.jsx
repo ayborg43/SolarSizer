@@ -83,8 +83,6 @@ export default function SolarCalculator() {
   const [backupTarget, setBackupTarget] = useState(restored?.backupTarget ?? "overnight");
   const [propertyType, setPropertyType] = useState(restored?.propertyType ?? "flat");
   const [installerPreference, setInstallerPreference] = useState(restored?.installerPreference ?? "compare");
-  const [fridgeOvernight, setFridgeOvernight] = useState(restored?.fridgeOvernight ?? true);
-  const [acDaily, setAcDaily] = useState(restored?.acDaily ?? false);
   const [autonomyDays, setAutonomyDays] = useState(restored?.autonomyDays ?? 1);
   const [batteryType, setBatteryType] = useState(restored?.batteryType ?? "agm");
   const [systemVoltage, setSystemVoltage] = useState(restored?.systemVoltage ?? 24);
@@ -125,11 +123,11 @@ export default function SolarCalculator() {
     if (!storage) return;
     saveWizardState(storage, {
       step, sunHours, appliances, backupTarget, propertyType,
-      installerPreference, fridgeOvernight, acDaily, autonomyDays, batteryType,
+      installerPreference, autonomyDays, batteryType,
       systemVoltage, expandedBattery, activeProfile, darkMode, showStepHelp,
       voltageManuallySet, backupSource, backupPrice, systemCost,
     });
-  }, [step, sunHours, appliances, backupTarget, propertyType, installerPreference, fridgeOvernight, acDaily, autonomyDays, batteryType, systemVoltage, expandedBattery, activeProfile, darkMode, showStepHelp, voltageManuallySet, backupSource, backupPrice, systemCost]);
+  }, [step, sunHours, appliances, backupTarget, propertyType, installerPreference, autonomyDays, batteryType, systemVoltage, expandedBattery, activeProfile, darkMode, showStepHelp, voltageManuallySet, backupSource, backupPrice, systemCost]);
 
   const isDesktop = windowWidth >= 900;
   const totalWh = appliances.reduce((s, a) => s + applianceWh(a), 0);
@@ -279,8 +277,6 @@ export default function SolarCalculator() {
     setBackupTarget("overnight");
     setPropertyType("flat");
     setInstallerPreference("compare");
-    setFridgeOvernight(true);
-    setAcDaily(false);
     setAutonomyDays(1);
     setBatteryType("agm");
     setSystemVoltage(24);
@@ -341,8 +337,6 @@ export default function SolarCalculator() {
           backupTarget={backupTarget} setBackupTarget={setBackupTarget} setAutonomyDays={setAutonomyDays}
           propertyType={propertyType} setPropertyType={setPropertyType}
           installerPreference={installerPreference} setInstallerPreference={setInstallerPreference}
-          fridgeOvernight={fridgeOvernight} setFridgeOvernight={setFridgeOvernight}
-          acDaily={acDaily} setAcDaily={setAcDaily}
           sunHours={sunHours} setSunHours={setSunHours}
           onContinue={() => setStep(1)}
         />
@@ -353,7 +347,6 @@ export default function SolarCalculator() {
         <StepAppliances
           styles={styles} T={T} isDesktop={isDesktop} helpBanner={helpBanner}
           appliances={appliances} activeProfile={activeProfile} selProfile={selProfile}
-          fridgeOvernight={fridgeOvernight} acDaily={acDaily}
           addingCustom={addingCustom} setAddingCustom={setAddingCustom}
           customName={customName} setCustomName={setCustomName}
           customWatts={customWatts} setCustomWatts={setCustomWatts}
@@ -406,7 +399,7 @@ export default function SolarCalculator() {
           results={liveResults} appliances={appliances}
           sunHours={sunHours}
           autonomyDays={autonomyDays} batteryType={batteryType} systemVoltage={systemVoltage}
-          acDaily={acDaily} installerPreference={installerPreference}
+          installerPreference={installerPreference}
           assistantMode={assistantMode} setAssistantMode={setAssistantMode}
           backupSource={backupSource} backupPrice={backupPrice}
           systemCost={systemCost} setSystemCost={setSystemCost}

@@ -11,7 +11,7 @@ function profileEstimatedWh(profile) {
 
 export default function StepAppliances({
   styles, T, isDesktop, helpBanner,
-  appliances, activeProfile, selProfile, fridgeOvernight, acDaily,
+  appliances, activeProfile, selProfile,
   addingCustom, setAddingCustom, customName, setCustomName,
   customWatts, setCustomWatts, customHours, setCustomHours,
   totalWh, totalApplianceUnits,
@@ -25,14 +25,6 @@ export default function StepAppliances({
       <div style={{ fontSize: isDesktop ? "26px" : "22px", fontWeight: "800", color: T.sectionTitle, marginBottom: "4px", letterSpacing: "-0.5px" }}>What will you power?</div>
       <div style={{ fontSize: "14px", color: T.sectionSub, marginBottom: "24px", lineHeight: "1.6" }}>Pick a profile template to start instantly, or build your list manually below.</div>
       {helpBanner}
-
-      {((fridgeOvernight && !appliances.some((a) => a.id === "fridge")) || (acDaily && !appliances.some((a) => a.id.startsWith("ac_")))) && (
-        <div style={{ ...infoBox, marginBottom: "16px", background: "rgba(59,130,246,0.06)", borderColor: "rgba(59,130,246,0.22)" }}>
-          <strong style={{ color: "#2563eb" }}>Assistant prompt:</strong>{" "}
-          {fridgeOvernight && !appliances.some((a) => a.id === "fridge") ? "You said the fridge should run overnight, so add Refrigerator before calculating. " : ""}
-          {acDaily && !appliances.some((a) => a.id.startsWith("ac_")) ? "You said AC will run daily, so include the correct AC size and hours." : ""}
-        </div>
-      )}
 
       <div style={labelSt}>Load Profile Templates</div>
       <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4,1fr)" : "1fr 1fr", gap: "10px", marginBottom: "16px" }}>

@@ -106,6 +106,14 @@ test("calcResults exposes the raw panel requirement before rounding up to whole 
   assert.ok(r.panels.totalWatts - r.panels.requiredPanelWatts < r.panels.watts);
 });
 
+test("calcResults picks the smallest standard battery combination covering the requirement", () => {
+  // 252W × 9h = 2268Wh → required ≈ 210Ah at 24V AGM. A 1×250Ah string covers
+  // it; the bank must not balloon to 300Ah (2×150Ah) or more.
+  const r = calcResults(baseArgs({ appliances: [{ id: "custom", name: "Load", watts: 252, hoursPerDay: 9, qty: 1 }] }));
+  assert.ok(r.battery.totalAh >= r.battery.requiredAh);
+  assert.ok(r.battery.totalAh <= 260, `bank ${r.battery.totalAh}Ah excessively oversizes ${r.battery.requiredAh.toFixed(0)}Ah requirement`);
+});
+
 test("calcResults falls back to first battery type when unknown", () => {
   const r = calcResults(baseArgs({ batteryType: "nonexistent" }));
   assert.equal(r.bat.id, "agm");

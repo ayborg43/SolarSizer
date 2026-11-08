@@ -14,7 +14,7 @@ const BACKUP_TARGETS = ["daytime", "overnight", "full-day", "generator"];
 
 const FIELDS = [
   "step", "sunHours", "appliances", "backupTarget", "propertyType",
-  "installerPreference", "fridgeOvernight", "acDaily", "autonomyDays",
+  "installerPreference", "autonomyDays",
   "batteryType", "systemVoltage", "expandedBattery", "activeProfile",
   "darkMode", "showStepHelp", "voltageManuallySet",
   "backupSource", "backupPrice", "systemCost",
@@ -57,8 +57,6 @@ export function parseWizardState(text) {
     backupTarget: BACKUP_TARGETS.includes(raw.backupTarget) ? raw.backupTarget : "overnight",
     propertyType: PROPERTY_TYPES.some((p) => p.id === raw.propertyType) ? raw.propertyType : "flat",
     installerPreference: INSTALLER_PREFS.some((p) => p.id === raw.installerPreference) ? raw.installerPreference : "compare",
-    fridgeOvernight: boolOr(raw.fridgeOvernight, true),
-    acDaily: boolOr(raw.acDaily, false),
     autonomyDays: Math.round(clampNumber(raw.autonomyDays, 1, 6, 1)),
     backupSource: ["petrol", "diesel", "grid"].includes(raw.backupSource) ? raw.backupSource : "petrol",
     backupPrice: clampNumber(raw.backupPrice, 0, 100000, 1000),

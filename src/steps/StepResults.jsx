@@ -6,7 +6,7 @@ import { hexToRgb } from "../theme";
 export default function StepResults({
   styles, T, isDesktop, helpBanner,
   results: r, appliances, sunHours, autonomyDays, batteryType,
-  systemVoltage, acDaily, installerPreference, assistantMode, setAssistantMode,
+  systemVoltage, installerPreference, assistantMode, setAssistantMode,
   backupSource, backupPrice, systemCost, setSystemCost, onAdjustAutonomy,
   onBack, onEditStep, onShare, onWhatsApp, onDownload, onReset,
 }) {
@@ -24,7 +24,7 @@ export default function StepResults({
   const confidenceWarnings = [
     "This is an estimate. Ask an installer to confirm load test, cable size, roof space, and battery chemistry.",
     heavyLoads.length ? `High-draw loads detected: ${heavyLoads.join(", ")}. Confirm inverter surge rating before installation.` : null,
-    acDaily ? "Daily AC use needs careful inverter surge sizing, dedicated circuits, and realistic runtime expectations." : null,
+    appliances.some((a) => a.id.startsWith("ac_")) ? "AC selected: daily AC use needs careful inverter surge sizing, dedicated circuits, and realistic runtime expectations." : null,
     r.battery.parallelStrings > 3 && batteryType !== "lithium" ? `${r.battery.parallelStrings} parallel battery strings exceeds the recommended maximum of 3 for lead-acid banks. Consider a higher system voltage, larger batteries, or lithium.` : null,
     batteryType === "lithium" ? "Lithium banks are commonly sold as single 24V or 48V rack units — the 12V module count shown is an equivalent-capacity guide, not a shopping list." : null,
   ].filter(Boolean);

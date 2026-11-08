@@ -5,7 +5,6 @@ export default function StepGoals({
   styles, T, isDesktop, helpBanner,
   backupTarget, setBackupTarget, setAutonomyDays,
   propertyType, setPropertyType, installerPreference, setInstallerPreference,
-  fridgeOvernight, setFridgeOvernight, acDaily, setAcDaily,
   sunHours, setSunHours,
   onContinue,
 }) {
@@ -43,18 +42,6 @@ export default function StepGoals({
           ))}
         </div>
 
-        <div style={{ ...labelSt, marginTop: "18px", marginBottom: "10px" }}>Assistant Questions</div>
-        <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "1fr 1fr" : "1fr", gap: "10px" }}>
-          {[
-            { label: "Do you want fridge overnight?", value: fridgeOvernight, setter: setFridgeOvernight },
-            { label: "Will AC run daily?", value: acDaily, setter: setAcDaily },
-          ].map((q) => (
-            <button key={q.label} onClick={() => q.setter(!q.value)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", padding: "12px 14px", borderRadius: "12px", border: q.value ? "2px solid #10b981" : `1px solid ${T.cardBorder}`, background: q.value ? "rgba(16,185,129,0.08)" : T.card, color: q.value ? "#059669" : T.btnClr, cursor: "pointer", fontFamily: "'Outfit',sans-serif" }}>
-              <span style={{ fontSize: "13px", fontWeight: "700" }}>{q.label}</span>
-              <span style={{ fontSize: "12px", fontWeight: "800" }}>{q.value ? "Yes" : "No"}</span>
-            </button>
-          ))}
-        </div>
       </div>
 
       <div style={{ ...card, marginBottom: "18px" }}>
