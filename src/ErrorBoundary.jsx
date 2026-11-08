@@ -18,7 +18,7 @@ export default class ErrorBoundary extends Component {
           <div style={{ fontSize: "40px", marginBottom: "12px" }} aria-hidden="true">⚠️</div>
           <h1 style={{ fontSize: "20px", marginBottom: "8px" }}>Something went wrong</h1>
           <p style={{ fontSize: "14px", color: "#6b7280", lineHeight: 1.6, marginBottom: "20px" }}>
-            SolarSizer hit an unexpected error. Your inputs are not saved — reload the page to start again.
+            SolarSizer hit an unexpected error. Your inputs are saved in this browser — reload the page to resume.
           </p>
           <button
             onClick={() => window.location.reload()}
